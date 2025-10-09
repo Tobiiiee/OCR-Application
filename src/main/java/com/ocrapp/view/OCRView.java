@@ -1,0 +1,432 @@
+package com.ocrapp.view;
+
+import javax.swing.*;
+import javax.swing.border.EmptyBorder;
+import javax.swing.border.TitledBorder;
+import java.awt.*;
+import java.awt.image.BufferedImage;
+
+/**
+ * Main GUI view for the OCR Application.
+ * Provides user interface for image loading, text extraction, and saving.
+ */
+public class OCRView extends JFrame {
+	
+	// this is unused, its just here to remove eclipse warning
+	private static final long serialVersionUID = 1L;
+	
+    // GUI Components
+    private JPanel mainPanel;
+    private JPanel imagePanel;
+    private JLabel imageLabel;
+    private JScrollPane imageScrollPane;
+    
+    private JTextArea textArea;
+    private JScrollPane textScrollPane;
+    
+    private JButton loadImageButton;
+    private JButton extractTextButton;
+    private JButton saveTextButton;
+    private JButton clearButton;
+    
+    private JLabel statusLabel;
+    private JLabel imageInfoLabel;
+    private JLabel textInfoLabel;
+    
+    private JMenuBar menuBar;
+    private JMenu fileMenu;
+    private JMenu editMenu;
+    private JMenu helpMenu;
+    
+    private JMenuItem openMenuItem;
+    private JMenuItem saveMenuItem;
+    private JMenuItem exitMenuItem;
+    private JMenuItem clearMenuItem;
+    private JMenuItem aboutMenuItem;
+    
+    // Window properties
+    private static final int WINDOW_WIDTH = 1200;
+    private static final int WINDOW_HEIGHT = 700;
+    private static final String WINDOW_TITLE = "OCR Application - Text Extraction by Tobiiiee";
+    
+    public OCRView() {
+        initializeComponents();
+        setupLayout();
+        setupMenuBar();
+        configureWindow();
+    }
+    
+    /**
+     * Initialize all GUI components
+     */
+    private void initializeComponents() {
+        // Main panel
+        mainPanel = new JPanel();
+        mainPanel.setBorder(new EmptyBorder(10, 10, 10, 10));
+        
+        // Image display components
+        imageLabel = new JLabel("No image loaded", SwingConstants.CENTER);
+        imageLabel.setPreferredSize(new Dimension(550, 500));
+        imageLabel.setBorder(BorderFactory.createLineBorder(Color.GRAY, 1));
+        imageLabel.setBackground(Color.WHITE);
+        imageLabel.setOpaque(true);
+        
+        imageScrollPane = new JScrollPane(imageLabel);
+        imageScrollPane.setPreferredSize(new Dimension(570, 520));
+        
+        imagePanel = new JPanel(new BorderLayout());
+        imagePanel.setBorder(new TitledBorder("Image Preview"));
+        imagePanel.add(imageScrollPane, BorderLayout.CENTER);
+        
+        imageInfoLabel = new JLabel("Image: None");
+        imageInfoLabel.setBorder(new EmptyBorder(5, 5, 5, 5));
+        imagePanel.add(imageInfoLabel, BorderLayout.SOUTH);
+        
+        // Text display components
+        textArea = new JTextArea();
+        textArea.setFont(new Font("Monospaced", Font.PLAIN, 12));
+        textArea.setLineWrap(true);
+        textArea.setWrapStyleWord(true);
+        textArea.setEditable(true);
+        
+        textScrollPane = new JScrollPane(textArea);
+        textScrollPane.setPreferredSize(new Dimension(570, 520));
+        
+        JPanel textPanel = new JPanel(new BorderLayout());
+        textPanel.setBorder(new TitledBorder("Extracted Text"));
+        textPanel.add(textScrollPane, BorderLayout.CENTER);
+        
+        textInfoLabel = new JLabel("Text: 0 characters, 0 words");
+        textInfoLabel.setBorder(new EmptyBorder(5, 5, 5, 5));
+        textPanel.add(textInfoLabel, BorderLayout.SOUTH);
+        
+        // Buttons
+        loadImageButton = new JButton("Load Image");
+        loadImageButton.setFont(new Font("Arial", Font.BOLD, 14));
+        loadImageButton.setPreferredSize(new Dimension(150, 40));
+        loadImageButton.setToolTipText("Load an image file for OCR processing");
+        
+        extractTextButton = new JButton("Extract Text");
+        extractTextButton.setFont(new Font("Arial", Font.BOLD, 14));
+        extractTextButton.setPreferredSize(new Dimension(150, 40));
+        extractTextButton.setEnabled(false);
+        extractTextButton.setToolTipText("Perform OCR on the loaded image");
+        
+        saveTextButton = new JButton("Save Text");
+        saveTextButton.setFont(new Font("Arial", Font.BOLD, 14));
+        saveTextButton.setPreferredSize(new Dimension(150, 40));
+        saveTextButton.setEnabled(false);
+        saveTextButton.setToolTipText("Save extracted text to a file");
+        
+        clearButton = new JButton("Clear All");
+        clearButton.setFont(new Font("Arial", Font.BOLD, 14));
+        clearButton.setPreferredSize(new Dimension(150, 40));
+        clearButton.setToolTipText("Clear image and text");
+        
+        // Status label
+        statusLabel = new JLabel("Ready");
+        statusLabel.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(Color.GRAY),
+                new EmptyBorder(5, 10, 5, 10)
+        ));
+        
+        // Split panes for image and text
+        JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, imagePanel, textPanel);
+        splitPane.setDividerLocation(580);
+        splitPane.setResizeWeight(0.5);
+        
+        mainPanel.setLayout(new BorderLayout(10, 10));
+        mainPanel.add(splitPane, BorderLayout.CENTER);
+    }
+    
+    /**
+     * Setup the layout of components
+     */
+    private void setupLayout() {
+        // Button panel
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 10));
+        buttonPanel.add(loadImageButton);
+        buttonPanel.add(extractTextButton);
+        buttonPanel.add(saveTextButton);
+        buttonPanel.add(clearButton);
+        
+        mainPanel.add(buttonPanel, BorderLayout.SOUTH);
+        
+        // Add status bar at the very bottom
+        JPanel statusPanel = new JPanel(new BorderLayout());
+        statusPanel.add(statusLabel, BorderLayout.CENTER);
+        
+        // Main container
+        Container contentPane = getContentPane();
+        contentPane.setLayout(new BorderLayout());
+        contentPane.add(mainPanel, BorderLayout.CENTER);
+        contentPane.add(statusPanel, BorderLayout.SOUTH);
+    }
+    
+    private void setupMenuBar() {
+        menuBar = new JMenuBar();
+        
+        fileMenu = new JMenu("File");
+        fileMenu.setMnemonic('F');
+        
+        openMenuItem = new JMenuItem("Open Image...");
+        openMenuItem.setAccelerator(KeyStroke.getKeyStroke("control O"));
+        openMenuItem.setMnemonic('O');
+        
+        saveMenuItem = new JMenuItem("Save Text...");
+        saveMenuItem.setAccelerator(KeyStroke.getKeyStroke("control S"));
+        saveMenuItem.setMnemonic('S');
+        saveMenuItem.setEnabled(false);
+        
+        exitMenuItem = new JMenuItem("Exit");
+        exitMenuItem.setAccelerator(KeyStroke.getKeyStroke("control Q"));
+        exitMenuItem.setMnemonic('X');
+        
+        fileMenu.add(openMenuItem);
+        fileMenu.add(saveMenuItem);
+        fileMenu.addSeparator();
+        fileMenu.add(exitMenuItem);
+        
+        editMenu = new JMenu("Edit");
+        editMenu.setMnemonic('E');
+        
+        clearMenuItem = new JMenuItem("Clear All");
+        clearMenuItem.setAccelerator(KeyStroke.getKeyStroke("control L"));
+        clearMenuItem.setMnemonic('C');
+        
+        editMenu.add(clearMenuItem);
+        
+        helpMenu = new JMenu("Help");
+        helpMenu.setMnemonic('H');
+        
+        aboutMenuItem = new JMenuItem("About");
+        aboutMenuItem.setMnemonic('A');
+        
+        helpMenu.add(aboutMenuItem);
+        
+        menuBar.add(fileMenu);
+        menuBar.add(editMenu);
+        menuBar.add(helpMenu);
+        
+        setJMenuBar(menuBar);
+    }
+    
+    /**
+     * Configure window properties
+     */
+    private void configureWindow() {
+        setTitle(WINDOW_TITLE);
+        setSize(WINDOW_WIDTH, WINDOW_HEIGHT);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setLocationRelativeTo(null); // Center on screen
+        setMinimumSize(new Dimension(800, 600));
+        
+        // Set application icon (later if made)
+        try {
+            // setIconImage(ImageIO.read(new File("icon.png")));
+        } catch (Exception e) {
+            // Icon not available, continue without it
+        }
+    }
+    
+    // ========== Public Methods for Controller ==========
+    
+    /**
+     * Display an image in the image panel
+     * @param image BufferedImage to display
+     */
+    public void displayImage(BufferedImage image) {
+        if (image == null) {
+            imageLabel.setIcon(null);
+            imageLabel.setText("No image loaded");
+            return;
+        }
+        
+        // Scale image to fit the label while maintaining aspect ratio
+        ImageIcon icon = new ImageIcon(scaleImage(image, imageLabel.getWidth(), imageLabel.getHeight()));
+        imageLabel.setIcon(icon);
+        imageLabel.setText(null);
+    }
+    
+    /**
+     * Display text in the text area
+     * @param text Text to display
+     */
+    public void displayText(String text) {
+        if (text == null) {
+            textArea.setText("");
+        } else {
+            textArea.setText(text);
+            textArea.setCaretPosition(0); // Scroll to top
+        }
+    }
+    
+    /**
+     * Get text from text area
+     * @return Current text in text area
+     */
+    public String getText() {
+        return textArea.getText();
+    }
+    
+    /**
+     * Update status label
+     * @param status Status message
+     */
+    public void setStatus(String status) {
+        statusLabel.setText(status);
+    }
+    
+    /**
+     * Update image info label
+     * @param info Image information
+     */
+    public void setImageInfo(String info) {
+        imageInfoLabel.setText(info);
+    }
+    
+    /**
+     * Update text info label
+     * @param info Text information
+     */
+    public void setTextInfo(String info) {
+        textInfoLabel.setText(info);
+    }
+    
+    /**
+     * Show error message dialog
+     * @param message Error message
+     */
+    public void showError(String message) {
+        JOptionPane.showMessageDialog(this, message, "Error", JOptionPane.ERROR_MESSAGE);
+    }
+    
+    /**
+     * Show information message dialog
+     * @param message Information message
+     */
+    public void showInfo(String message) {
+        JOptionPane.showMessageDialog(this, message, "Information", JOptionPane.INFORMATION_MESSAGE);
+    }
+    
+    /**
+     * Show success message dialog
+     * @param message Success message
+     */
+    public void showSuccess(String message) {
+        JOptionPane.showMessageDialog(this, message, "Success", JOptionPane.INFORMATION_MESSAGE);
+    }
+    
+    /**
+     * Clear all content (image and text)
+     */
+    public void clearAll() {
+        imageLabel.setIcon(null);
+        imageLabel.setText("No image loaded");
+        textArea.setText("");
+        imageInfoLabel.setText("Image: None");
+        textInfoLabel.setText("Text: 0 characters, 0 words");
+        setStatus("Ready");
+        extractTextButton.setEnabled(false);
+        saveTextButton.setEnabled(false);
+        saveMenuItem.setEnabled(false);
+    }
+    
+    /**
+     * Enable or disable extract button
+     * @param enabled true to enable, false to disable
+     */
+    public void setExtractButtonEnabled(boolean enabled) {
+        extractTextButton.setEnabled(enabled);
+    }
+    
+    /**
+     * Enable or disable save button
+     * @param enabled true to enable, false to disable
+     */
+    public void setSaveButtonEnabled(boolean enabled) {
+        saveTextButton.setEnabled(enabled);
+        saveMenuItem.setEnabled(enabled);
+    }
+    
+    /**
+     * Show about dialog
+     */
+    public void showAboutDialog() {
+        String message = "OCR Application v1.0\n\n" +
+                "A Java-based Optical Character Recognition application\n" +
+                "using Tesseract OCR engine.\n\n" +
+                "Developed using:\n" +
+                "- Java 21\n" +
+                "- Tesseract OCR\n" +
+                "- Maven\n" +
+                "- Swing GUI\n\n" +
+                "© 2025 - Tobiiiee";
+        
+        JOptionPane.showMessageDialog(this, message, "About OCR Application", 
+                JOptionPane.INFORMATION_MESSAGE);
+    }
+    
+    // ========== Getters for Buttons (for Controller to add listeners) ==========
+    
+    public JButton getLoadImageButton() {
+        return loadImageButton;
+    }
+    
+    public JButton getExtractTextButton() {
+        return extractTextButton;
+    }
+    
+    public JButton getSaveTextButton() {
+        return saveTextButton;
+    }
+    
+    public JButton getClearButton() {
+        return clearButton;
+    }
+    
+    public JMenuItem getOpenMenuItem() {
+        return openMenuItem;
+    }
+    
+    public JMenuItem getSaveMenuItem() {
+        return saveMenuItem;
+    }
+    
+    public JMenuItem getExitMenuItem() {
+        return exitMenuItem;
+    }
+    
+    public JMenuItem getClearMenuItem() {
+        return clearMenuItem;
+    }
+    
+    public JMenuItem getAboutMenuItem() {
+        return aboutMenuItem;
+    }
+    
+    // ========== Helper Methods ==========
+    
+    /**
+     * Scale image to fit within specified dimensions while maintaining aspect ratio
+     * @param image Original image
+     * @param maxWidth Maximum width
+     * @param maxHeight Maximum height
+     * @return Scaled image
+     */
+    private Image scaleImage(BufferedImage image, int maxWidth, int maxHeight) {
+        int originalWidth = image.getWidth();
+        int originalHeight = image.getHeight();
+        
+        // Calculate scale factor
+        double scale = Math.min(
+                (double) maxWidth / originalWidth,
+                (double) maxHeight / originalHeight
+        );
+        
+        int scaledWidth = (int) (originalWidth * scale);
+        int scaledHeight = (int) (originalHeight * scale);
+        
+        return image.getScaledInstance(scaledWidth, scaledHeight, Image.SCALE_SMOOTH);
+    }
+}
