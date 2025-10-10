@@ -9,8 +9,8 @@ import java.util.regex.Matcher;
  */
 public class TextProcessor {
     
-    // Common OCR error patterns
-    private static final Pattern MULTIPLE_SPACES = Pattern.compile("\\s+");
+    // Common OCR error patterns, need to add more later
+    private static final Pattern MULTIPLE_SPACES = Pattern.compile("[ \t]+");
     private static final Pattern MULTIPLE_NEWLINES = Pattern.compile("\n{3,}");
     private static final Pattern TRAILING_SPACES = Pattern.compile("[ \t]+$", Pattern.MULTILINE);
     private static final Pattern LEADING_SPACES = Pattern.compile("^[ \t]+", Pattern.MULTILINE);
@@ -76,9 +76,10 @@ public class TextProcessor {
         
         // Common OCR mistakes
         // just some basic stuff - should be expanded based on testing
-        correctedText = correctedText.replace("0", "O"); // In some contexts, 0 might be O
-        correctedText = correctedText.replace("|", "I"); // Pipe often mistaken for I
-        correctedText = correctedText.replace("5", "S"); // In some words
+        
+        // correctedText = correctedText.replace("0", "O"); // In some contexts, 0 might be O
+        // correctedText = correctedText.replace("|", "I"); // Pipe often mistaken for I
+        // correctedText = correctedText.replace("5", "S"); // In some words
         
         // Note: later might use:
         // - Dictionary lookups
