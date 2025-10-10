@@ -20,6 +20,8 @@ public class OCRView extends JFrame {
     private JPanel imagePanel;
     private JLabel imageLabel;
     private JScrollPane imageScrollPane;
+    private JProgressBar progressBar;
+    private JLabel progressLabel;
     
     private JTextArea textArea;
     private JScrollPane textScrollPane;
@@ -123,6 +125,16 @@ public class OCRView extends JFrame {
         clearButton.setPreferredSize(new Dimension(150, 40));
         clearButton.setToolTipText("Clear image and text");
         
+        // Progress bar
+        progressBar = new JProgressBar(0, 100);
+        progressBar.setStringPainted(true);
+        progressBar.setVisible(false); // Hidden by default
+        progressBar.setPreferredSize(new Dimension(400, 25));
+        progressBar.setForeground(new Color(76, 175, 80));
+        
+        progressLabel = new JLabel("");
+        progressLabel.setVisible(false);
+        
         // Status label
         statusLabel = new JLabel("Ready");
         statusLabel.setBorder(BorderFactory.createCompoundBorder(
@@ -152,9 +164,16 @@ public class OCRView extends JFrame {
         
         mainPanel.add(buttonPanel, BorderLayout.SOUTH);
         
-        // Add status bar at the very bottom
+        // Progress panel with bar and label
+        JPanel progressPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 5));
+        progressPanel.add(progressLabel);
+        progressPanel.add(progressBar);
+        progressPanel.setVisible(false); // Hidden by default
+
+        // Status panel with progress
         JPanel statusPanel = new JPanel(new BorderLayout());
         statusPanel.add(statusLabel, BorderLayout.CENTER);
+        statusPanel.add(progressPanel, BorderLayout.NORTH);
         
         // Main container
         Container contentPane = getContentPane();
@@ -367,6 +386,36 @@ public class OCRView extends JFrame {
                 JOptionPane.INFORMATION_MESSAGE);
     }
     
+    /**
+     * Show progress bar with message
+     * @param message Progress message
+     */
+    public void showProgress(String message) {
+        progressLabel.setText(message);
+        progressBar.setValue(0);
+        progressBar.setVisible(true);
+        progressLabel.setVisible(true);
+        progressBar.getParent().setVisible(true);
+    }
+
+    /**
+     * Update progress bar
+     * @param value Progress value (0-100)
+     * @param message Progress message
+     */
+    public void updateProgress(int value, String message) {
+        progressBar.setValue(value);
+        progressLabel.setText(message);
+    }
+
+    /**
+     * Hide progress bar
+     */
+    public void hideProgress() {
+        progressBar.setVisible(false);
+        progressLabel.setVisible(false);
+        progressBar.getParent().setVisible(false);
+    }
     // ========== Getters for Buttons (for Controller to add listeners) ==========
     
     public JButton getLoadImageButton() {
@@ -403,6 +452,10 @@ public class OCRView extends JFrame {
     
     public JMenuItem getAboutMenuItem() {
         return aboutMenuItem;
+    }
+    
+    public JLabel getProgressLabel() {
+        return progressLabel;
     }
     
     // ========== Helper Methods ==========

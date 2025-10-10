@@ -115,7 +115,11 @@ public class ImageProcessor {
     }
     
     /**
-     * Check if theres a need to invert colors
+     * Check if image needs color inversion based on average brightness.
+     * Dark backgrounds (avg brightness < 100) benefit from inversion for better OCR.
+     * 
+     * @param image Image to analyze
+     * @return true if inversion is recommended, false otherwise
      */
     public static boolean shouldInvert(BufferedImage image) {
         long totalBrightness = 0;
@@ -145,9 +149,12 @@ public class ImageProcessor {
     }
     
     /**
+     * Invert image colors.
+     * Converts dark backgrounds to light, improving OCR on images with
+     * light text on dark backgrounds.
      * 
-     * @param image
-     * @return inverted image
+     * @param image Image to invert
+     * @return Inverted BufferedImage
      */
     public static BufferedImage invertImage(BufferedImage image) {
         int width = image.getWidth();

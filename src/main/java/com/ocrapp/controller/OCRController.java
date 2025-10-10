@@ -141,29 +141,73 @@ public class OCRController {
         // Disable buttons during processing
         view.setExtractButtonEnabled(false);
         view.getLoadImageButton().setEnabled(false);
-        view.setStatus("Preprocessing image...");
+        
+        // Show progress bar
+        view.showProgress("Initializing...");
+        view.setStatus("Starting OCR process...");
         
         // Process in a separate thread to keep UI responsive
         SwingWorker<OCRResult, Void> worker = new SwingWorker<OCRResult, Void>() {
             @Override
             protected OCRResult doInBackground() throws Exception {
+                // Step 1: Preprocessing (0-30%)
+                updateProgressSmooth(0, 15, "Analyzing image...");
+                
+                updateProgressSmooth(15, 30, "Preprocessing image...");
                 BufferedImage processedImage = imageProcessor.preprocessImage(currentImage);
                 
                 if (processedImage == null) {
                     throw new Exception("Image preprocessing failed");
                 }
                 
-                // Update status on EDT
-                SwingUtilities.invokeLater(() -> view.setStatus("Extracting text..."));
+                SwingUtilities.invokeLater(() -> 
+                    view.updateProgress(30, "Preprocessing complete"));
                 
-                // Perform OCR
+                // Step 2: OCR Processing (30-80%)
+                updateProgressSmooth(30, 40, "Initializing OCR engine...");
+                
+                updateProgressSmooth(40, 50, "Extracting text...");
+                
+                // Perform OCR (this is the longest operation)
                 OCRResult result = ocrEngine.extractText(currentImageFile, processedImage);
                 
                 if (result == null) {
                     throw new Exception("OCR extraction failed");
                 }
                 
+                // Simulate progress during OCR
+                updateProgressSmooth(50, 80, "Processing text...");
+                
+                SwingUtilities.invokeLater(() -> 
+                    view.updateProgress(80, "Text extracted"));
+                
+                // Step 3: Text Processing (80-100%)
+                updateProgressSmooth(80, 90, "Cleaning text...");
+                
+                updateProgressSmooth(90, 100, "Formatting text...");
+                
+                SwingUtilities.invokeLater(() -> 
+                    view.updateProgress(100, "Complete!"));
+                
                 return result;
+            }
+            
+            /**
+             * Smoothly update progress from start to end value
+             * @param start Starting percentage
+             * @param end Ending percentage
+             * @param message Progress message
+             */
+            private void updateProgressSmooth(int start, int end, String message) throws InterruptedException {
+                int steps = (end - start);
+                int delay = Math.max(20, 150 / steps);
+                
+                for (int i = start; i <= end; i++) {
+                    final int progress = i;
+                    SwingUtilities.invokeLater(() -> 
+                        view.updateProgress(progress, message));
+                    Thread.sleep(delay);
+                }
             }
             
             @Override
@@ -206,11 +250,12 @@ public class OCRController {
                     view.setStatus("OCR extraction failed");
                     System.err.println("OCR error: " + e.getMessage());
                     e.printStackTrace();
+                } finally {
+                    // Hide progress bar and re-enable buttons
+                    view.hideProgress();
+                    view.setExtractButtonEnabled(true);
+                    view.getLoadImageButton().setEnabled(true);
                 }
-                
-                // Re-enable buttons
-                view.setExtractButtonEnabled(true);
-                view.getLoadImageButton().setEnabled(true);
             }
         };
         
