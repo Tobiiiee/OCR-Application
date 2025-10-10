@@ -10,10 +10,15 @@
 	<name>OCR Application</name>
 	<description>Optical Character Recognition Application using Tesseract</description>
 
+	<inceptionYear>2025</inceptionYear>
+	<organization>
+	    <name>Ayaan Qazi</name>
+	    <url>https://github.com/Tobiiiee</url>
+	</organization>
+
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<maven.compiler.source>21</maven.compiler.source>
-		<maven.compiler.target>21</maven.compiler.target>
+		<maven.compiler.release>21</maven.compiler.release>
 	</properties>
 
 	<dependencies>
@@ -61,6 +66,75 @@
 	                <mainClass>com.ocrapp.main.OCRApplication</mainClass>
 	            </configuration>
 	        </plugin>
+	        
+	        <!-- Maven Assembly Plugin -->
+	        <plugin>
+	            <groupId>org.apache.maven.plugins</groupId>
+	            <artifactId>maven-assembly-plugin</artifactId>
+	            <version>3.6.0</version>
+	            <configuration>
+	                <archive>
+	                    <manifest>
+	                        <mainClass>com.ocrapp.main.OCRApplication</mainClass>
+	                    </manifest>
+	                </archive>
+	                <descriptorRefs>
+	                    <descriptorRef>jar-with-dependencies</descriptorRef>
+	                </descriptorRefs>
+	                <finalName>OCRApplication</finalName>
+	                <appendAssemblyId>false</appendAssemblyId>
+	            </configuration>
+	            <executions>
+	                <execution>
+	                    <id>make-assembly</id>
+	                    <phase>package</phase>
+	                    <goals>
+	                        <goal>single</goal>
+	                    </goals>
+	                </execution>
+	            </executions>
+	        </plugin>
+	        
+	        <!-- Launch4j Maven Plugin -->
+			<plugin>
+			    <groupId>com.akathist.maven.plugins.launch4j</groupId>
+			    <artifactId>launch4j-maven-plugin</artifactId>
+			    <version>2.5.0</version>
+			    <executions>
+			        <execution>
+			            <id>l4j-clui</id>
+			            <phase>package</phase>
+			            <goals>
+			                <goal>launch4j</goal>
+			            </goals>
+			            <configuration>
+			                <headerType>gui</headerType>
+			                <jar>${project.build.directory}/OCRApplication.jar</jar>
+			                <outfile>${project.build.directory}/OCRApplication.exe</outfile>
+			                <downloadUrl>https://www.oracle.com/java/technologies/downloads/</downloadUrl>
+			                <classPath>
+			                    <mainClass>com.ocrapp.main.OCRApplication</mainClass>
+			                </classPath>
+			                <jre>
+			                    <minVersion>11</minVersion>
+			                    <initialHeapSize>256</initialHeapSize>
+			                    <maxHeapSize>1024</maxHeapSize>
+			                </jre>
+			                <versionInfo>
+			                    <fileVersion>1.0.0.0</fileVersion>
+			                    <txtFileVersion>1.0.0.0</txtFileVersion>
+			                    <fileDescription>OCR Application</fileDescription>
+			                    <copyright>2025</copyright>
+			                    <productVersion>1.0.0.0</productVersion>
+			                    <txtProductVersion>1.0.0.0</txtProductVersion>
+			                    <productName>OCR Application</productName>
+			                    <internalName>OCRApplication</internalName>
+			                    <originalFilename>OCRApplication.exe</originalFilename>
+			                </versionInfo>
+			            </configuration>
+			        </execution>
+			    </executions>
+			</plugin>
 	    </plugins>
 	</build>
 </project>
