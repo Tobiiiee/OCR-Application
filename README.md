@@ -54,28 +54,16 @@ OCRApplication/
 
 ## Installation
 
-1. Clone the repository:
+### Windows Users (.exe)
 
-   ```bash
-   git clone https://github.com/Tobiiiee/OCR-Application.git
-   ```
+1. Download `OCRApplication.exe` from [Releases](https://github.com/Tobiiiee/OCR-Application/releases)
+2. Install Java 11+ and Tesseract OCR
+3. Double-click `OCRApplication.exe`
 
-2. Navigate to project directory:
+### All Platforms (.jar)
 
-   ```bash
-   cd OCR-Application
-   ```
-
-3. Build with Maven:
-
-   ```bash
-   mvn clean install
-   ```
-
-4. Run the application:
-   ```bash
-   mvn exec:java
-   ```
+1. Download `OCRApplication.jar`
+2. Run: `java -jar OCRApplication.jar`
 
 ## Usage
 
