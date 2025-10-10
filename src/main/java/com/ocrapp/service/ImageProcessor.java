@@ -95,10 +95,18 @@ public class ImageProcessor {
         // Step 1: Resize if too large
         BufferedImage processedImage = resizeIfNeeded(image);
         
-        // Step 2: Convert to grayscale
+        // Step 2: Invert color brightness if needed
+        if (shouldInvert(processedImage)) {
+            System.out.println("Image is  too dark - inverting for better OCR...");
+            processedImage = invertImage(processedImage);
+        } else {
+            System.out.println("I see the light - skipping inversion.");
+        }
+        
+        // Step 3: Convert to grayscale
         processedImage = convertToGrayscale(processedImage);
         
-        // Step 3: Enhance contrast
+        // Step 4: Enhance contrast
         processedImage = enhanceContrast(processedImage);
         
         System.out.println("Image preprocessing completed");
@@ -106,6 +114,61 @@ public class ImageProcessor {
         return processedImage;
     }
     
+    /**
+     * Check if theres a need to invert colors
+     */
+    public static boolean shouldInvert(BufferedImage image) {
+        long totalBrightness = 0;
+        int count = 0;
+
+        int width = image.getWidth();
+        int height = image.getHeight();
+
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
+                int rgb = image.getRGB(x, y);
+                int red = (rgb >> 16) & 0xFF;
+                int green = (rgb >> 8) & 0xFF;
+                int blue = rgb & 0xFF;
+
+                int brightness = (red + green + blue) / 3;
+                totalBrightness += brightness;
+                count++;
+            }
+        }
+
+        double avgBrightness = (double) totalBrightness / count;
+        System.out.println("Average brightness: " + avgBrightness);
+
+        // Threshold of ~100 works well for most images
+        return avgBrightness < 100;
+    }
+    
+    /**
+     * 
+     * @param image
+     * @return inverted image
+     */
+    public static BufferedImage invertImage(BufferedImage image) {
+        int width = image.getWidth();
+        int height = image.getHeight();
+        BufferedImage inverted = new BufferedImage(width, height, image.getType());
+
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
+                int rgba = image.getRGB(x, y);
+                int alpha = (rgba >> 24) & 0xFF;
+                int red = 255 - ((rgba >> 16) & 0xFF);
+                int green = 255 - ((rgba >> 8) & 0xFF);
+                int blue = 255 - (rgba & 0xFF);
+
+                int invertedRGB = (alpha << 24) | (red << 16) | (green << 8) | blue;
+                inverted.setRGB(x, y, invertedRGB);
+            }
+        }
+
+        return inverted;
+    }
     /**
      * Convert image to grayscale
      * @param image Image to convert
