@@ -17,8 +17,8 @@ public class OCRView extends JFrame {
 	
     // GUI Components
     private JPanel mainPanel;
-    private JPanel imagePanel;
-    private JLabel imageLabel;
+    private ImageCropPanel imageCropPanel;
+    private JPanel imagePanelContainer;
     private JScrollPane imageScrollPane;
     private JProgressBar progressBar;
     private JLabel progressLabel;
@@ -30,6 +30,9 @@ public class OCRView extends JFrame {
     private JButton extractTextButton;
     private JButton saveTextButton;
     private JButton clearButton;
+    private JButton selectRegionButton;
+    private JButton clearSelectionButton;
+    private JButton copyButton;
     
     private JLabel statusLabel;
     private JLabel imageInfoLabel;
@@ -48,6 +51,7 @@ public class OCRView extends JFrame {
     private JMenuItem exitMenuItem;
     private JMenuItem clearMenuItem;
     private JMenuItem aboutMenuItem;
+    private JMenuItem copyMenuItem;
     
     // Window properties
     private static final int WINDOW_WIDTH = 1200;
@@ -69,23 +73,38 @@ public class OCRView extends JFrame {
         mainPanel = new JPanel();
         mainPanel.setBorder(new EmptyBorder(10, 10, 10, 10));
         
-        // Image display components
-        imageLabel = new JLabel("No image loaded", SwingConstants.CENTER);
-        imageLabel.setPreferredSize(new Dimension(550, 500));
-        imageLabel.setBorder(BorderFactory.createLineBorder(Color.GRAY, 1));
-        imageLabel.setBackground(Color.WHITE);
-        imageLabel.setOpaque(true);
-        
-        imageScrollPane = new JScrollPane(imageLabel);
+        // Image display components - interactive selection panel
+        imageCropPanel = new ImageCropPanel();
+        imageCropPanel.setPreferredSize(new Dimension(550, 500));
+        imageCropPanel.setBorder(BorderFactory.createLineBorder(Color.GRAY, 1));
+
+        imageScrollPane = new JScrollPane(imageCropPanel);
         imageScrollPane.setPreferredSize(new Dimension(570, 520));
+
+        imagePanelContainer = new JPanel(new BorderLayout());
+        imagePanelContainer.setBorder(new TitledBorder("Image Preview"));
+        imagePanelContainer.add(imageScrollPane, BorderLayout.CENTER);
+
+        imageInfoLabel = new JLabel("Image: None");
+        imageInfoLabel.setBorder(new EmptyBorder(5, 5, 5, 5));
+        imagePanelContainer.add(imageInfoLabel, BorderLayout.SOUTH);
+
+        JPanel imagePanelContainer = new JPanel(new BorderLayout());
+        imagePanelContainer.setBorder(new TitledBorder("Image Preview"));
+        imagePanelContainer.add(imageScrollPane, BorderLayout.CENTER);
+
+        imageInfoLabel = new JLabel("Image: None");
+        imageInfoLabel.setBorder(new EmptyBorder(5, 5, 5, 5));
+        imagePanelContainer.add(imageInfoLabel, BorderLayout.SOUTH);
         
-        imagePanel = new JPanel(new BorderLayout());
-        imagePanel.setBorder(new TitledBorder("Image Preview"));
-        imagePanel.add(imageScrollPane, BorderLayout.CENTER);
+        clearSelectionButton = new JButton("Clear Selection");
+        clearSelectionButton.setFont(new Font("Arial", Font.PLAIN, 12));
+        clearSelectionButton.setPreferredSize(new Dimension(140, 35));
+        clearSelectionButton.setEnabled(false);
+        clearSelectionButton.setToolTipText("Clear current selection");
         
         imageInfoLabel = new JLabel("Image: None");
         imageInfoLabel.setBorder(new EmptyBorder(5, 5, 5, 5));
-        imagePanel.add(imageInfoLabel, BorderLayout.SOUTH);
         
         // Text display components
         textArea = new JTextArea();
@@ -111,6 +130,12 @@ public class OCRView extends JFrame {
         loadImageButton.setPreferredSize(new Dimension(150, 40));
         loadImageButton.setToolTipText("Load an image file for OCR processing");
         
+        selectRegionButton = new JButton("Confirm Selection");
+        selectRegionButton.setFont(new Font("Arial", Font.BOLD, 14));
+        selectRegionButton.setPreferredSize(new Dimension(170, 40));
+        selectRegionButton.setEnabled(false);
+        selectRegionButton.setToolTipText("Confirm selected region and extract text");
+        
         extractTextButton = new JButton("Extract Text");
         extractTextButton.setFont(new Font("Arial", Font.BOLD, 14));
         extractTextButton.setPreferredSize(new Dimension(150, 40));
@@ -122,6 +147,12 @@ public class OCRView extends JFrame {
         saveTextButton.setPreferredSize(new Dimension(150, 40));
         saveTextButton.setEnabled(false);
         saveTextButton.setToolTipText("Save extracted text to a file");
+        
+        copyButton = new JButton("Copy to Clipboard");
+        copyButton.setFont(new Font("Arial", Font.BOLD, 14));
+        copyButton.setPreferredSize(new Dimension(180, 40));
+        copyButton.setEnabled(false);
+        copyButton.setToolTipText("Copy extracted text to clipboard");
         
         clearButton = new JButton("Clear All");
         clearButton.setFont(new Font("Arial", Font.BOLD, 14));
@@ -168,7 +199,7 @@ public class OCRView extends JFrame {
         ));
         
         // Split panes for image and text
-        JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, imagePanel, textPanel);
+        JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, imagePanelContainer, textPanel);
         splitPane.setDividerLocation(580);
         splitPane.setResizeWeight(0.5);
         
@@ -188,10 +219,13 @@ public class OCRView extends JFrame {
     	// Button panel
     	JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 10));
     	buttonPanel.add(loadImageButton);
+    	buttonPanel.add(selectRegionButton);
+    	buttonPanel.add(clearSelectionButton);
     	buttonPanel.add(extractTextButton);
+    	buttonPanel.add(copyButton);
     	buttonPanel.add(saveTextButton);
     	buttonPanel.add(clearButton);
-
+    	
     	// Combined panel with language selector and buttons
     	JPanel controlPanel = new JPanel(new BorderLayout());
     	controlPanel.add(languagePanel, BorderLayout.NORTH);
@@ -241,13 +275,21 @@ public class OCRView extends JFrame {
         fileMenu.addSeparator();
         fileMenu.add(exitMenuItem);
         
+     // Edit Menu
         editMenu = new JMenu("Edit");
         editMenu.setMnemonic('E');
-        
+
+        copyMenuItem = new JMenuItem("Copy Text");
+        copyMenuItem.setAccelerator(KeyStroke.getKeyStroke("control C"));
+        copyMenuItem.setMnemonic('C');
+        copyMenuItem.setEnabled(false);
+
         clearMenuItem = new JMenuItem("Clear All");
         clearMenuItem.setAccelerator(KeyStroke.getKeyStroke("control L"));
-        clearMenuItem.setMnemonic('C');
-        
+        clearMenuItem.setMnemonic('L');
+
+        editMenu.add(copyMenuItem);
+        editMenu.addSeparator();
         editMenu.add(clearMenuItem);
         
         helpMenu = new JMenu("Help");
@@ -289,17 +331,12 @@ public class OCRView extends JFrame {
      * Display an image in the image panel
      * @param image BufferedImage to display
      */
+    /**
+     * Display an image in the image panel
+     * @param image BufferedImage to display
+     */
     public void displayImage(BufferedImage image) {
-        if (image == null) {
-            imageLabel.setIcon(null);
-            imageLabel.setText("No image loaded");
-            return;
-        }
-        
-        // Scale image to fit the label while maintaining aspect ratio
-        ImageIcon icon = new ImageIcon(scaleImage(image, imageLabel.getWidth(), imageLabel.getHeight()));
-        imageLabel.setIcon(icon);
-        imageLabel.setText(null);
+        imageCropPanel.setImage(image);
     }
     
     /**
@@ -375,15 +412,19 @@ public class OCRView extends JFrame {
      * Clear all content (image and text)
      */
     public void clearAll() {
-        imageLabel.setIcon(null);
-        imageLabel.setText("No image loaded");
+    	imageCropPanel.setImage(null);
+    	imageCropPanel.clearSelection();
         textArea.setText("");
         imageInfoLabel.setText("Image: None");
         textInfoLabel.setText("Text: 0 characters, 0 words");
         setStatus("Ready");
         extractTextButton.setEnabled(false);
+        copyButton.setEnabled(false);
         saveTextButton.setEnabled(false);
         saveMenuItem.setEnabled(false);
+        selectRegionButton.setEnabled(false);
+        clearSelectionButton.setEnabled(false);
+        
     }
     
     /**
@@ -497,28 +538,63 @@ public class OCRView extends JFrame {
         return languageComboBox;
     }
     
-    // ========== Helper Methods ==========
+    public JButton getSelectRegionButton() {
+        return selectRegionButton;
+    }
+
+    public JButton getClearSelectionButton() {
+        return clearSelectionButton;
+    }
+
+    public JButton getCopyButton() {
+        return copyButton;
+    }
+    
+    public JMenuItem getCopyMenuItem() {
+        return copyMenuItem;
+    }
+
+    public void setCopyButtonEnabled(boolean enabled) {
+        copyButton.setEnabled(enabled);
+    }
+    
+    public void setClearSelectionButtonEnabled(boolean enabled) {
+        clearSelectionButton.setEnabled(enabled);
+    }
+    
+    public void setSelectRegionButtonEnabled(boolean enabled) {
+        selectRegionButton.setEnabled(enabled);
+    }
+    
     
     /**
-     * Scale image to fit within specified dimensions while maintaining aspect ratio
-     * @param image Original image
-     * @param maxWidth Maximum width
-     * @param maxHeight Maximum height
-     * @return Scaled image
+     * Get selected region from image panel
+     * @return BufferedImage of selected region, or null
      */
-    private Image scaleImage(BufferedImage image, int maxWidth, int maxHeight) {
-        int originalWidth = image.getWidth();
-        int originalHeight = image.getHeight();
-        
-        // Calculate scale factor
-        double scale = Math.min(
-                (double) maxWidth / originalWidth,
-                (double) maxHeight / originalHeight
-        );
-        
-        int scaledWidth = (int) (originalWidth * scale);
-        int scaledHeight = (int) (originalHeight * scale);
-        
-        return image.getScaledInstance(scaledWidth, scaledHeight, Image.SCALE_SMOOTH);
+    public BufferedImage getSelectedRegion() {
+        return imageCropPanel.getSelectedRegion();
+    }
+
+    /**
+     * Check if user has made a selection
+     * @return true if selection exists
+     */
+    public boolean hasSelection() {
+        return imageCropPanel.hasSelection();
+    }
+
+    /**
+     * Clear the current selection
+     */
+    public void clearSelection() {
+        imageCropPanel.clearSelection();
+    }
+
+    /**
+     * Get the image crop panel
+     * @return ImageCropPanel instance
+     */
+    public ImageCropPanel getImageCropPanel() {
+        return imageCropPanel;
     }
 }

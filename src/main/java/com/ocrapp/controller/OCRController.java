@@ -7,6 +7,10 @@ import com.ocrapp.service.TextProcessor;
 import com.ocrapp.util.FileManager;
 import com.ocrapp.view.OCRView;
 
+import java.awt.Toolkit;
+import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.StringSelection;
+
 import javax.swing.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -26,6 +30,8 @@ public class OCRController {
     private File currentImageFile;
     private BufferedImage currentImage;
     private OCRResult currentResult;
+    private BufferedImage selectedRegionImage;
+    private boolean isRegionSelected;
     
     /**
      * Constructor - initializes all components
@@ -44,6 +50,8 @@ public class OCRController {
         this.currentImageFile = null;
         this.currentImage = null;
         this.currentResult = null;
+        this.selectedRegionImage = null;
+        this.isRegionSelected = false;
         
         initializeListeners();
         
@@ -61,17 +69,22 @@ public class OCRController {
      */
     private void initializeListeners() {
         view.getLoadImageButton().addActionListener(e -> handleLoadImage());
+        view.getSelectRegionButton().addActionListener(e -> handleSelectRegion());
+        view.getClearSelectionButton().addActionListener(e -> handleClearSelection());
         view.getExtractTextButton().addActionListener(e -> handleExtractText());
         view.getSaveTextButton().addActionListener(e -> handleSaveText());
+        view.getCopyButton().addActionListener(e -> handleCopyToClipboard());
         view.getClearButton().addActionListener(e -> handleClear());
         
         view.getLanguageComboBox().addActionListener(e -> handleLanguageChange());
         
         view.getOpenMenuItem().addActionListener(e -> handleLoadImage());
         view.getSaveMenuItem().addActionListener(e -> handleSaveText());
+        view.getCopyMenuItem().addActionListener(e -> handleCopyToClipboard());
         view.getExitMenuItem().addActionListener(e -> handleExit());
         view.getClearMenuItem().addActionListener(e -> handleClear());
         view.getAboutMenuItem().addActionListener(e -> view.showAboutDialog());
+        
     }
     
     private void handleLoadImage() {
@@ -120,6 +133,12 @@ public class OCRController {
         view.setImageInfo(imageInfo);
         
         view.setExtractButtonEnabled(true);
+        view.setSelectRegionButtonEnabled(true);
+        view.setStatus("Image loaded - Draw a selection box on the image or click 'Extract Text' for full image");
+        
+        // Reset any previous region selection
+        selectedRegionImage = null;
+        isRegionSelected = false;
         
         // Clear previous text
         view.displayText("");
@@ -135,18 +154,41 @@ public class OCRController {
      * Handle Extract Text button click
      */
     private void handleExtractText() {
-        if (currentImage == null || currentImageFile == null) {
-            view.showError("No image loaded.\nPlease load an image first.");
-            return;
-        }
-        
-        // Disable buttons during processing
-        view.setExtractButtonEnabled(false);
-        view.getLoadImageButton().setEnabled(false);
-        
-        // Show progress bar
-        view.showProgress("Initializing...");
-        view.setStatus("Starting OCR process...");
+    	 if (currentImage == null || currentImageFile == null) {
+    	        view.showError("No image loaded.\nPlease load an image first.");
+    	        return;
+    	    }
+    	    
+    	    // Determine what to process: selected region or full image
+    	    final BufferedImage imageToProcess;
+    	    final String statusMessage;
+    	    BufferedImage sourceImage = (isRegionSelected && selectedRegionImage != null)
+    	    	    ? selectedRegionImage
+    	    	    : currentImage;
+    	    
+    	    BufferedImage processedImage = imageProcessor.preprocessImage(sourceImage);
+    	    
+    	    if (isRegionSelected && selectedRegionImage != null) {
+    	        // User selected a region - process only that area
+    	        imageToProcess = selectedRegionImage;
+    	        statusMessage = "Processing selected region...";
+    	        System.out.println("OCR processing selected region: " + 
+    	                          imageToProcess.getWidth() + "x" + imageToProcess.getHeight());
+    	    } else {
+    	        // No region selected - process entire image
+    	        imageToProcess = currentImage;
+    	        statusMessage = "Processing entire image...";
+    	        System.out.println("OCR processing entire image");
+    	    }
+    	    
+    	    // Disable buttons during processing
+    	    view.setExtractButtonEnabled(false);
+    	    view.getLoadImageButton().setEnabled(false);
+    	    view.setSelectRegionButtonEnabled(false);
+    	    
+    	    // Show progress bar
+    	    view.showProgress("Initializing...");
+    	    view.setStatus(statusMessage);
         
         // Process in a separate thread to keep UI responsive
         SwingWorker<OCRResult, Void> worker = new SwingWorker<OCRResult, Void>() {
@@ -155,8 +197,7 @@ public class OCRController {
                 // Step 1: Preprocessing (0-30%)
                 updateProgressSmooth(0, 15, "Analyzing image...");
                 
-                updateProgressSmooth(15, 30, "Preprocessing image...");
-                BufferedImage processedImage = imageProcessor.preprocessImage(currentImage);
+                updateProgressSmooth(15, 30, "Preprocessing image...");              
                 
                 if (processedImage == null) {
                     throw new Exception("Image preprocessing failed");
@@ -236,6 +277,8 @@ public class OCRController {
                     // Enable save button if text was extracted
                     if (result.hasText()) {
                         view.setSaveButtonEnabled(true);
+                        view.setCopyButtonEnabled(true);
+                        view.getCopyMenuItem().setEnabled(true);
                         view.setStatus("Text extraction completed successfully");
                         view.showSuccess("OCR completed!\n" +
                                        result.getWordCount() + " words extracted.");
@@ -257,6 +300,8 @@ public class OCRController {
                     view.hideProgress();
                     view.setExtractButtonEnabled(true);
                     view.getLoadImageButton().setEnabled(true);
+                    view.setSelectRegionButtonEnabled(true);
+                    
                 }
             }
         };
@@ -300,6 +345,103 @@ public class OCRController {
         }
     }
     
+    /**
+     * Handle Select Region button click
+     */
+    private void handleSelectRegion() {
+        if (currentImage == null) {
+            view.showError("No image loaded.\nPlease load an image first.");
+            return;
+        }
+        
+        // Check if user has made a selection
+        if (view.hasSelection()) {
+            // User has selected - confirm and store it
+            BufferedImage selected = view.getSelectedRegion();
+            view.setClearSelectionButtonEnabled(true);
+            
+            if (selected != null) {
+                this.selectedRegionImage = selected;
+                this.isRegionSelected = true;
+                
+                // Update display
+                String imageInfo = String.format("Image: %s (%dx%d) | Selected: %dx%d - Ready to extract",
+                        currentImageFile.getName(),
+                        currentImage.getWidth(),
+                        currentImage.getHeight(),
+                        selected.getWidth(),
+                        selected.getHeight());
+                view.setImageInfo(imageInfo);
+                
+                view.setStatus("Region confirmed! Click 'Extract Text' to OCR this area");
+                
+                System.out.println("Region confirmed: " + selected.getWidth() + "x" + selected.getHeight());
+                
+                // Show confirmation
+                int result = JOptionPane.showConfirmDialog(
+                        view,
+                        "Region selected: " + selected.getWidth() + "×" + selected.getHeight() + " pixels\n\n" +
+                        "Click 'Yes' to extract text from this region now,\n" +
+                        "or 'No' to adjust your selection.",
+                        "Confirm Selection",
+                        JOptionPane.YES_NO_OPTION,
+                        JOptionPane.QUESTION_MESSAGE
+                );
+                
+                if (result == JOptionPane.YES_OPTION) {
+                    // User confirmed - trigger extraction immediately
+                    handleExtractText();
+                }
+            } else {
+                view.showError("Failed to extract selected region.\nPlease try selecting again.");
+                view.clearSelection();
+            }
+        } else {
+            // No selection yet - instruct user to make one
+            view.showInfo(
+                "How to Select a Region:\n\n" +
+                "1. Click and DRAG on the image to draw a selection box\n" +
+                "2. Release mouse when you've selected the desired area\n" +
+                "3. Click 'Select Region' button again to confirm\n\n" +
+                "The selection appears as a blue rectangle.\n" +
+                "Perfect for selecting individual text sections!"
+            );
+            view.setStatus("Draw a selection on the image by clicking and dragging...");
+        }
+    }
+    
+    /**
+     * Handle Copy to Clipboard button click
+     */
+    private void handleCopyToClipboard() {
+        String text = view.getText();
+        
+        if (text == null || text.trim().isEmpty()) {
+            view.showError("No text to copy.\nPlease extract text first.");
+            return;
+        }
+        
+        try {
+            // Copy to system clipboard
+            StringSelection stringSelection = new StringSelection(text);
+            Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+            clipboard.setContents(stringSelection, null);
+            
+            view.setStatus("Text copied to clipboard (" + text.length() + " characters)");
+            view.showInfo("Text copied to clipboard!\n" +
+                         "Characters: " + text.length() + "\n" +
+                         "Words: " + textProcessor.countWords(text));
+            
+            System.out.println("Text copied to clipboard: " + text.length() + " characters");
+            
+        } catch (Exception e) {
+            view.showError("Failed to copy text to clipboard:\n" + e.getMessage());
+            view.setStatus("Clipboard copy failed");
+            System.err.println("Clipboard error: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+    
     private void handleClear() {
         // Confirm with user
         int choice = JOptionPane.showConfirmDialog(
@@ -315,6 +457,8 @@ public class OCRController {
             currentImageFile = null;
             currentImage = null;
             currentResult = null;
+            selectedRegionImage = null;
+            isRegionSelected = false;
             
             imageProcessor.clearCurrentImage();
             
@@ -361,6 +505,22 @@ public class OCRController {
             // Reset to English
             view.getLanguageComboBox().setSelectedIndex(0);
         }
+    }
+    
+    /**
+     * Handle Clear Selection button click
+     */
+    private void handleClearSelection() {
+        view.clearSelection();
+        selectedRegionImage = null;
+        isRegionSelected = false;
+        
+        view.setImageInfo("Image: " + currentImageFile.getName() + 
+                          " (" + currentImage.getWidth() + "x" + currentImage.getHeight() + ")");
+        view.setStatus("Selection cleared - Ready to select again or extract from full image");
+        view.setClearSelectionButtonEnabled(false);
+        
+        System.out.println("Selection cleared");
     }
     
     public String getOCREngineInfo() {
