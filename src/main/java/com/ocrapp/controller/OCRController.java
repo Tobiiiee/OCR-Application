@@ -65,6 +65,8 @@ public class OCRController {
         view.getSaveTextButton().addActionListener(e -> handleSaveText());
         view.getClearButton().addActionListener(e -> handleClear());
         
+        view.getLanguageComboBox().addActionListener(e -> handleLanguageChange());
+        
         view.getOpenMenuItem().addActionListener(e -> handleLoadImage());
         view.getSaveMenuItem().addActionListener(e -> handleSaveText());
         view.getExitMenuItem().addActionListener(e -> handleExit());
@@ -335,6 +337,29 @@ public class OCRController {
         if (choice == JOptionPane.YES_OPTION) {
             System.out.println("Application exiting...");
             System.exit(0);
+        }
+    }
+    
+    /**
+     * Handle language selection change
+     */
+    private void handleLanguageChange() {
+        String selectedLanguage = (String) view.getLanguageComboBox().getSelectedItem();
+        String languageCode = OCREngine.mapLanguageToCode(selectedLanguage);
+        
+        boolean success = ocrEngine.setLanguage(languageCode);
+        
+        if (success) {
+            view.setStatus("Language changed to: " + selectedLanguage);
+            System.out.println("OCR language changed to: " + selectedLanguage + " (" + languageCode + ")");
+        } else {
+            view.showError("Failed to change language to " + selectedLanguage + "\n" +
+                          "Language data may not be installed.\n" +
+                          "Download from: https://github.com/tesseract-ocr/tessdata");
+            view.setStatus("Language change failed");
+            
+            // Reset to English
+            view.getLanguageComboBox().setSelectedIndex(0);
         }
     }
     

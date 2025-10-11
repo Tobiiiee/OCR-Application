@@ -40,6 +40,9 @@ public class OCRView extends JFrame {
     private JMenu editMenu;
     private JMenu helpMenu;
     
+    private JComboBox<String> languageComboBox;
+    private JLabel languageLabel;
+    
     private JMenuItem openMenuItem;
     private JMenuItem saveMenuItem;
     private JMenuItem exitMenuItem;
@@ -125,6 +128,28 @@ public class OCRView extends JFrame {
         clearButton.setPreferredSize(new Dimension(150, 40));
         clearButton.setToolTipText("Clear image and text");
         
+        // Language selection
+        languageLabel = new JLabel("OCR Language:");
+        languageLabel.setFont(new Font("Arial", Font.PLAIN, 12));
+
+        String[] languages = {
+            "English",
+            "Spanish", 
+            "French",
+            "German",
+            "Italian",
+            "Portuguese",
+            "Arabic",
+            "Chinese (Simplified)",
+            "Japanese",
+            "Korean",
+            "Russian"
+        };
+
+        languageComboBox = new JComboBox<>(languages);
+        languageComboBox.setPreferredSize(new Dimension(150, 30));
+        languageComboBox.setToolTipText("Select OCR language");
+        
         // Progress bar
         progressBar = new JProgressBar(0, 100);
         progressBar.setStringPainted(true);
@@ -155,14 +180,24 @@ public class OCRView extends JFrame {
      * Setup the layout of components
      */
     private void setupLayout() {
-        // Button panel
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 10));
-        buttonPanel.add(loadImageButton);
-        buttonPanel.add(extractTextButton);
-        buttonPanel.add(saveTextButton);
-        buttonPanel.add(clearButton);
-        
-        mainPanel.add(buttonPanel, BorderLayout.SOUTH);
+    	// Language selection panel
+    	JPanel languagePanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 5));
+    	languagePanel.add(languageLabel);
+    	languagePanel.add(languageComboBox);
+
+    	// Button panel
+    	JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 10));
+    	buttonPanel.add(loadImageButton);
+    	buttonPanel.add(extractTextButton);
+    	buttonPanel.add(saveTextButton);
+    	buttonPanel.add(clearButton);
+
+    	// Combined panel with language selector and buttons
+    	JPanel controlPanel = new JPanel(new BorderLayout());
+    	controlPanel.add(languagePanel, BorderLayout.NORTH);
+    	controlPanel.add(buttonPanel, BorderLayout.CENTER);
+
+    	mainPanel.add(controlPanel, BorderLayout.SOUTH);
         
         // Progress panel with bar and label
         JPanel progressPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 5));
@@ -456,6 +491,10 @@ public class OCRView extends JFrame {
     
     public JLabel getProgressLabel() {
         return progressLabel;
+    }
+    
+    public JComboBox<String> getLanguageComboBox() {
+        return languageComboBox;
     }
     
     // ========== Helper Methods ==========

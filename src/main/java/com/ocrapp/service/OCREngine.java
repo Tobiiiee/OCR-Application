@@ -276,6 +276,40 @@ public class OCREngine {
     }
     
     /**
+     * Map language display names to Tesseract language codes
+     * @param languageName Display name ("English")
+     * @return Tesseract language code ("eng")
+     */
+    public static String mapLanguageToCode(String languageName) {
+        switch (languageName) {
+            case "English":
+                return "eng";
+            case "Spanish":
+                return "spa";
+            case "French":
+                return "fra";
+            case "German":
+                return "deu";
+            case "Italian":
+                return "ita";
+            case "Portuguese":
+                return "por";
+            case "Arabic":
+                return "ara";
+            case "Chinese (Simplified)":
+                return "chi_sim";
+            case "Japanese":
+                return "jpn";
+            case "Korean":
+                return "kor";
+            case "Russian":
+                return "rus";
+            default:
+                return "eng"; // Default language
+        }
+    }
+    
+    /**
      * Get current language setting
      * @return Current language code
      */
