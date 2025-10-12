@@ -31,7 +31,6 @@ public class OCRView extends JFrame {
     private JButton saveTextButton;
     private JButton clearButton;
     private JButton selectRegionButton;
-    private JButton clearSelectionButton;
     private JButton copyButton;
     
     private JLabel statusLabel;
@@ -88,23 +87,6 @@ public class OCRView extends JFrame {
         imageInfoLabel = new JLabel("Image: None");
         imageInfoLabel.setBorder(new EmptyBorder(5, 5, 5, 5));
         imagePanelContainer.add(imageInfoLabel, BorderLayout.SOUTH);
-
-        JPanel imagePanelContainer = new JPanel(new BorderLayout());
-        imagePanelContainer.setBorder(new TitledBorder("Image Preview"));
-        imagePanelContainer.add(imageScrollPane, BorderLayout.CENTER);
-
-        imageInfoLabel = new JLabel("Image: None");
-        imageInfoLabel.setBorder(new EmptyBorder(5, 5, 5, 5));
-        imagePanelContainer.add(imageInfoLabel, BorderLayout.SOUTH);
-        
-        clearSelectionButton = new JButton("Clear Selection");
-        clearSelectionButton.setFont(new Font("Arial", Font.PLAIN, 12));
-        clearSelectionButton.setPreferredSize(new Dimension(140, 35));
-        clearSelectionButton.setEnabled(false);
-        clearSelectionButton.setToolTipText("Clear current selection");
-        
-        imageInfoLabel = new JLabel("Image: None");
-        imageInfoLabel.setBorder(new EmptyBorder(5, 5, 5, 5));
         
         // Text display components
         textArea = new JTextArea();
@@ -130,17 +112,17 @@ public class OCRView extends JFrame {
         loadImageButton.setPreferredSize(new Dimension(150, 40));
         loadImageButton.setToolTipText("Load an image file for OCR processing");
         
-        selectRegionButton = new JButton("Confirm Selection");
+        selectRegionButton = new JButton("Select Area");
         selectRegionButton.setFont(new Font("Arial", Font.BOLD, 14));
-        selectRegionButton.setPreferredSize(new Dimension(170, 40));
+        selectRegionButton.setPreferredSize(new Dimension(150, 40));
         selectRegionButton.setEnabled(false);
-        selectRegionButton.setToolTipText("Confirm selected region and extract text");
+        selectRegionButton.setToolTipText("Select a specific region from the image for OCR");
         
         extractTextButton = new JButton("Extract Text");
         extractTextButton.setFont(new Font("Arial", Font.BOLD, 14));
         extractTextButton.setPreferredSize(new Dimension(150, 40));
         extractTextButton.setEnabled(false);
-        extractTextButton.setToolTipText("Perform OCR on the loaded image");
+        extractTextButton.setToolTipText("Perform OCR on the entire loaded image");
         
         saveTextButton = new JButton("Save Text");
         saveTextButton.setFont(new Font("Arial", Font.BOLD, 14));
@@ -216,11 +198,10 @@ public class OCRView extends JFrame {
     	languagePanel.add(languageLabel);
     	languagePanel.add(languageComboBox);
 
-    	// Button panel
+    	// Button panel - removed clearSelectionButton
     	JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 10));
     	buttonPanel.add(loadImageButton);
     	buttonPanel.add(selectRegionButton);
-    	buttonPanel.add(clearSelectionButton);
     	buttonPanel.add(extractTextButton);
     	buttonPanel.add(copyButton);
     	buttonPanel.add(saveTextButton);
@@ -275,7 +256,7 @@ public class OCRView extends JFrame {
         fileMenu.addSeparator();
         fileMenu.add(exitMenuItem);
         
-     // Edit Menu
+        // Edit Menu
         editMenu = new JMenu("Edit");
         editMenu.setMnemonic('E');
 
@@ -327,10 +308,6 @@ public class OCRView extends JFrame {
     
     // ========== Public Methods for Controller ==========
     
-    /**
-     * Display an image in the image panel
-     * @param image BufferedImage to display
-     */
     /**
      * Display an image in the image panel
      * @param image BufferedImage to display
@@ -423,8 +400,7 @@ public class OCRView extends JFrame {
         saveTextButton.setEnabled(false);
         saveMenuItem.setEnabled(false);
         selectRegionButton.setEnabled(false);
-        clearSelectionButton.setEnabled(false);
-        
+        selectRegionButton.setText("Select Area"); // Reset button text
     }
     
     /**
@@ -492,6 +468,7 @@ public class OCRView extends JFrame {
         progressLabel.setVisible(false);
         progressBar.getParent().setVisible(false);
     }
+    
     // ========== Getters for Buttons (for Controller to add listeners) ==========
     
     public JButton getLoadImageButton() {
@@ -542,10 +519,6 @@ public class OCRView extends JFrame {
         return selectRegionButton;
     }
 
-    public JButton getClearSelectionButton() {
-        return clearSelectionButton;
-    }
-
     public JButton getCopyButton() {
         return copyButton;
     }
@@ -558,14 +531,9 @@ public class OCRView extends JFrame {
         copyButton.setEnabled(enabled);
     }
     
-    public void setClearSelectionButtonEnabled(boolean enabled) {
-        clearSelectionButton.setEnabled(enabled);
-    }
-    
     public void setSelectRegionButtonEnabled(boolean enabled) {
         selectRegionButton.setEnabled(enabled);
     }
-    
     
     /**
      * Get selected region from image panel
@@ -594,7 +562,7 @@ public class OCRView extends JFrame {
      * Get the image crop panel
      * @return ImageCropPanel instance
      */
-    public ImageCropPanel getImageCropPanel() {
+    public ImageCropPanel getImagePanel() {
         return imageCropPanel;
     }
 }

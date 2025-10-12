@@ -4,22 +4,25 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.BufferedImage;
+import java.util.function.Consumer;
 
 /**
  * Interactive panel for selecting rectangular regions from images.
  * Allows user to select a region by clicking and dragging.
+ * Automatically triggers callback when selection is complete.
  */
 public class ImageCropPanel extends JPanel {
     
-	// this is unused, its just here to remove eclipse warning
-	private static final long serialVersionUID = 1L;
-		
+    // this is unused, its just here to remove eclipse warning
+    private static final long serialVersionUID = 1L;
+        
     private BufferedImage image;
     private BufferedImage scaledImage;
     private Rectangle selectionRect;
     private Point startPoint;
     private Point endPoint;
     private boolean isDragging;
+    private boolean selectionEnabled;
     
     private double scaleX;
     private double scaleY;
@@ -30,6 +33,9 @@ public class ImageCropPanel extends JPanel {
     
     private int imageXOffset;
     private int imageYOffset;
+    
+    // Callback for when selection is complete
+    private Consumer<BufferedImage> onSelectionComplete;
 
     /**
      * Constructor
@@ -37,6 +43,7 @@ public class ImageCropPanel extends JPanel {
     public ImageCropPanel() {
         this.selectionRect = null;
         this.isDragging = false;
+        this.selectionEnabled = false;
         this.scaleX = 1.0;
         this.scaleY = 1.0;
         
@@ -47,13 +54,41 @@ public class ImageCropPanel extends JPanel {
     }
     
     /**
+     * Set callback for selection completion
+     * @param callback Function to call when selection is complete
+     */
+    public void setOnSelectionComplete(Consumer<BufferedImage> callback) {
+        this.onSelectionComplete = callback;
+    }
+    
+    /**
+     * Enable or disable selection mode
+     * @param enabled true to enable selection
+     */
+    public void setSelectionEnabled(boolean enabled) {
+        this.selectionEnabled = enabled;
+        if (!enabled) {
+            clearSelection();
+        }
+        repaint();
+    }
+    
+    /**
+     * Check if selection mode is enabled
+     * @return true if selection is enabled
+     */
+    public boolean isSelectionEnabled() {
+        return selectionEnabled;
+    }
+    
+    /**
      * Setup mouse listeners for selection
      */
     private void setupMouseListeners() {
         MouseAdapter mouseAdapter = new MouseAdapter() {
             @Override
             public void mousePressed(MouseEvent e) {
-                if (image != null) {
+                if (image != null && selectionEnabled) {
                     startPoint = e.getPoint();
                     endPoint = startPoint;
                     isDragging = true;
@@ -64,7 +99,7 @@ public class ImageCropPanel extends JPanel {
             
             @Override
             public void mouseDragged(MouseEvent e) {
-                if (isDragging && image != null) {
+                if (isDragging && image != null && selectionEnabled) {
                     endPoint = e.getPoint();
                     updateSelectionRect();
                     repaint();
@@ -73,11 +108,24 @@ public class ImageCropPanel extends JPanel {
             
             @Override
             public void mouseReleased(MouseEvent e) {
-                if (isDragging && image != null) {
+                if (isDragging && image != null && selectionEnabled) {
                     endPoint = e.getPoint();
                     isDragging = false;
                     updateSelectionRect();
                     repaint();
+                    
+                    // Auto-trigger OCR on valid selection
+                    if (hasSelection()) {
+                        BufferedImage selectedRegion = getSelectedRegion();
+                        if (selectedRegion != null && onSelectionComplete != null) {
+                            // Disable selection mode after completing
+                            selectionEnabled = false;
+                            
+                            // Trigger callback
+                            SwingUtilities.invokeLater(() -> 
+                                onSelectionComplete.accept(selectedRegion));
+                        }
+                    }
                 }
             }
         };
@@ -85,11 +133,11 @@ public class ImageCropPanel extends JPanel {
         addMouseListener(mouseAdapter);
         addMouseMotionListener(mouseAdapter);
         
-        // Change cursor when hovering
+        // Change cursor based on selection mode
         addMouseMotionListener(new MouseMotionAdapter() {
             @Override
             public void mouseMoved(MouseEvent e) {
-                if (image != null) {
+                if (image != null && selectionEnabled) {
                     setCursor(Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
                 } else {
                     setCursor(Cursor.getDefaultCursor());
@@ -237,6 +285,20 @@ public class ImageCropPanel extends JPanel {
             int x = (getWidth() - scaledImage.getWidth()) / 2;
             int y = (getHeight() - scaledImage.getHeight()) / 2;
             g2d.drawImage(scaledImage, x, y, null);
+            
+            // Draw selection indicator message when in selection mode
+            if (selectionEnabled && !isDragging && selectionRect == null) {
+                g2d.setColor(new Color(0, 0, 0, 150));
+                String msg = "Click and drag to select text region";
+                FontMetrics fm = g2d.getFontMetrics();
+                int msgWidth = fm.stringWidth(msg);
+                int msgX = (getWidth() - msgWidth) / 2;
+                int msgY = 30;
+                
+                g2d.fillRoundRect(msgX - 10, msgY - 20, msgWidth + 20, 30, 10, 10);
+                g2d.setColor(Color.WHITE);
+                g2d.drawString(msg, msgX, msgY);
+            }
             
             if (selectionRect != null) {
                 g2d.setColor(SELECTION_COLOR);
