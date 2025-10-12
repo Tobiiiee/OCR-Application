@@ -72,7 +72,6 @@ public class OCRController {
         view.getSelectRegionButton().addActionListener(e -> handleSelectRegion());
         view.getExtractTextButton().addActionListener(e -> handleExtractText(currentImage, false));
         view.getSaveTextButton().addActionListener(e -> handleSaveText());
-        view.getCopyButton().addActionListener(e -> handleCopyToClipboard());
         view.getClearButton().addActionListener(e -> handleClear());
         
         view.getLanguageComboBox().addActionListener(e -> handleLanguageChange());
@@ -287,7 +286,6 @@ public class OCRController {
                     // Enable save button if text was extracted
                     if (!finalText.trim().isEmpty()) {
                         view.setSaveButtonEnabled(true);
-                        view.setCopyButtonEnabled(true);
                         view.getCopyMenuItem().setEnabled(true);
                         
                         if (shouldAppend) {

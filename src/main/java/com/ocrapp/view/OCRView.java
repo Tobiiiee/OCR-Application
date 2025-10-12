@@ -33,7 +33,6 @@ public class OCRView extends JFrame {
     private JButton saveTextButton;
     private JButton clearButton;
     private JButton selectRegionButton;
-    private JButton copyButton;
     
     private JLabel statusLabel;
     private JLabel imageInfoLabel;
@@ -146,12 +145,6 @@ public class OCRView extends JFrame {
         saveTextButton.setEnabled(false);
         saveTextButton.setToolTipText("Save extracted text to a file");
         
-        copyButton = new JButton("Copy to Clipboard");
-        copyButton.setFont(new Font("Arial", Font.BOLD, 14));
-        copyButton.setPreferredSize(new Dimension(180, 40));
-        copyButton.setEnabled(false);
-        copyButton.setToolTipText("Copy extracted text to clipboard");
-        
         clearButton = new JButton("Clear All");
         clearButton.setFont(new Font("Arial", Font.BOLD, 14));
         clearButton.setPreferredSize(new Dimension(150, 40));
@@ -223,7 +216,6 @@ public class OCRView extends JFrame {
     	buttonPanel.add(loadImageButton);
     	buttonPanel.add(selectRegionButton);
     	buttonPanel.add(extractTextButton);
-    	buttonPanel.add(copyButton);
     	buttonPanel.add(saveTextButton);
     	buttonPanel.add(clearButton);
     	
@@ -436,7 +428,6 @@ public class OCRView extends JFrame {
         textInfoLabel.setText("Text: 0 characters, 0 words");
         setStatus("Ready");
         extractTextButton.setEnabled(false);
-        copyButton.setEnabled(false);
         saveTextButton.setEnabled(false);
         saveMenuItem.setEnabled(false);
         selectRegionButton.setEnabled(false);
@@ -525,10 +516,6 @@ public class OCRView extends JFrame {
         imageCropPanel.clearSelection();
     }
     
-    public void setCopyButtonEnabled(boolean enabled) {
-        copyButton.setEnabled(enabled);
-    }
-    
     public void setSelectRegionButtonEnabled(boolean enabled) {
         selectRegionButton.setEnabled(enabled);
     }
@@ -580,10 +567,6 @@ public class OCRView extends JFrame {
     
     public JButton getSelectRegionButton() {
         return selectRegionButton;
-    }
-
-    public JButton getCopyButton() {
-        return copyButton;
     }
     
     public JMenuItem getCopyMenuItem() {

@@ -48,10 +48,7 @@ public class OCREngine {
             
             tesseract = new Tesseract();
             
-            // Set data path - Tesseract needs to know where language data files are
             tesseract.setDatapath(DEFAULT_DATA_PATH);
-            
-            // Set language
             tesseract.setLanguage(currentLanguage);
             
             // Set OCR Engine Mode (OEM)
