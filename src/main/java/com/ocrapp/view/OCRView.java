@@ -3,6 +3,7 @@ package com.ocrapp.view;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
+import javax.swing.undo.UndoManager;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 
@@ -22,6 +23,7 @@ public class OCRView extends JFrame {
     private JScrollPane imageScrollPane;
     private JProgressBar progressBar;
     private JLabel progressLabel;
+    private LineNumberPanel lineNumberPanel;
     
     private JTextArea textArea;
     private JScrollPane textScrollPane;
@@ -51,6 +53,13 @@ public class OCRView extends JFrame {
     private JMenuItem clearMenuItem;
     private JMenuItem aboutMenuItem;
     private JMenuItem copyMenuItem;
+    
+    private UndoManager undoManager;
+    private JMenuItem undoMenuItem;
+    private JMenuItem redoMenuItem;
+    private JMenuItem selectAllMenuItem;
+    private JMenuItem cutMenuItem;
+    private JMenuItem pasteMenuItem;
     
     // Window properties
     private static final int WINDOW_WIDTH = 1200;
@@ -88,15 +97,22 @@ public class OCRView extends JFrame {
         imageInfoLabel.setBorder(new EmptyBorder(5, 5, 5, 5));
         imagePanelContainer.add(imageInfoLabel, BorderLayout.SOUTH);
         
-        // Text display components
         textArea = new JTextArea();
         textArea.setFont(new Font("Monospaced", Font.PLAIN, 12));
         textArea.setLineWrap(true);
         textArea.setWrapStyleWord(true);
         textArea.setEditable(true);
         
+        undoManager = new UndoManager();
+        textArea.getDocument().addUndoableEditListener(e -> {
+            undoManager.addEdit(e.getEdit());
+            updateUndoRedoState();
+        });
+        
         textScrollPane = new JScrollPane(textArea);
         textScrollPane.setPreferredSize(new Dimension(570, 520));
+        lineNumberPanel = new LineNumberPanel(textArea);
+        textScrollPane.setRowHeaderView(lineNumberPanel);
         
         JPanel textPanel = new JPanel(new BorderLayout());
         textPanel.setBorder(new TitledBorder("Extracted Text"));
@@ -140,6 +156,10 @@ public class OCRView extends JFrame {
         clearButton.setFont(new Font("Arial", Font.BOLD, 14));
         clearButton.setPreferredSize(new Dimension(150, 40));
         clearButton.setToolTipText("Clear image and text");
+        
+        clearMenuItem = new JMenuItem("Clear All");
+        clearMenuItem.setAccelerator(KeyStroke.getKeyStroke("control L"));
+        clearMenuItem.setMnemonic('L');
         
         // Language selection
         languageLabel = new JLabel("OCR Language:");
@@ -256,22 +276,40 @@ public class OCRView extends JFrame {
         fileMenu.addSeparator();
         fileMenu.add(exitMenuItem);
         
-        // Edit Menu
         editMenu = new JMenu("Edit");
         editMenu.setMnemonic('E');
 
+        undoMenuItem = new JMenuItem("Undo");
+        undoMenuItem.setAccelerator(KeyStroke.getKeyStroke("control Z"));
+        undoMenuItem.setEnabled(false);
+
+        redoMenuItem = new JMenuItem("Redo");
+        redoMenuItem.setAccelerator(KeyStroke.getKeyStroke("control Y"));
+        redoMenuItem.setEnabled(false);
+
+        cutMenuItem = new JMenuItem("Cut");
+        cutMenuItem.setAccelerator(KeyStroke.getKeyStroke("control X"));
+
         copyMenuItem = new JMenuItem("Copy Text");
         copyMenuItem.setAccelerator(KeyStroke.getKeyStroke("control C"));
-        copyMenuItem.setMnemonic('C');
         copyMenuItem.setEnabled(false);
 
-        clearMenuItem = new JMenuItem("Clear All");
-        clearMenuItem.setAccelerator(KeyStroke.getKeyStroke("control L"));
-        clearMenuItem.setMnemonic('L');
+        pasteMenuItem = new JMenuItem("Paste");
+        pasteMenuItem.setAccelerator(KeyStroke.getKeyStroke("control V"));
 
-        editMenu.add(copyMenuItem);
-        editMenu.addSeparator();
+        selectAllMenuItem = new JMenuItem("Select All");
+        selectAllMenuItem.setAccelerator(KeyStroke.getKeyStroke("control A"));
+
         editMenu.add(clearMenuItem);
+        editMenu.add(undoMenuItem);
+        editMenu.add(redoMenuItem);
+        editMenu.addSeparator();
+        editMenu.add(cutMenuItem);
+        editMenu.add(copyMenuItem);
+        editMenu.add(pasteMenuItem);
+        editMenu.addSeparator();
+        editMenu.add(selectAllMenuItem);
+        editMenu.addSeparator();
         
         helpMenu = new JMenu("Help");
         helpMenu.setMnemonic('H');
@@ -392,6 +430,8 @@ public class OCRView extends JFrame {
     	imageCropPanel.setImage(null);
     	imageCropPanel.clearSelection();
         textArea.setText("");
+        undoManager.discardAllEdits();
+        updateUndoRedoState();
         imageInfoLabel.setText("Image: None");
         textInfoLabel.setText("Text: 0 characters, 0 words");
         setStatus("Ready");
@@ -469,6 +509,29 @@ public class OCRView extends JFrame {
         progressBar.getParent().setVisible(false);
     }
     
+    /**
+     * Update undo/redo menu item states
+     */
+    private void updateUndoRedoState() {
+        undoMenuItem.setEnabled(undoManager.canUndo());
+        redoMenuItem.setEnabled(undoManager.canRedo());
+    }
+    
+    public boolean hasSelection() {
+        return imageCropPanel.hasSelection();
+    }
+
+    public void clearSelection() {
+        imageCropPanel.clearSelection();
+    }
+    
+    public void setCopyButtonEnabled(boolean enabled) {
+        copyButton.setEnabled(enabled);
+    }
+    
+    public void setSelectRegionButtonEnabled(boolean enabled) {
+        selectRegionButton.setEnabled(enabled);
+    }
     // ========== Getters for Buttons (for Controller to add listeners) ==========
     
     public JButton getLoadImageButton() {
@@ -526,43 +589,40 @@ public class OCRView extends JFrame {
     public JMenuItem getCopyMenuItem() {
         return copyMenuItem;
     }
+    
+    public JMenuItem getUndoMenuItem() {
+        return undoMenuItem;
+    }
 
-    public void setCopyButtonEnabled(boolean enabled) {
-        copyButton.setEnabled(enabled);
+    public JMenuItem getRedoMenuItem() {
+        return redoMenuItem;
+    }
+
+    public JMenuItem getCutMenuItem() {
+        return cutMenuItem;
+    }
+
+    public JMenuItem getPasteMenuItem() {
+        return pasteMenuItem;
+    }
+
+    public JMenuItem getSelectAllMenuItem() {
+        return selectAllMenuItem;
+    }
+
+    public UndoManager getUndoManager() {
+        return undoManager;
     }
     
-    public void setSelectRegionButtonEnabled(boolean enabled) {
-        selectRegionButton.setEnabled(enabled);
-    }
-    
-    /**
-     * Get selected region from image panel
-     * @return BufferedImage of selected region, or null
-     */
     public BufferedImage getSelectedRegion() {
         return imageCropPanel.getSelectedRegion();
     }
 
-    /**
-     * Check if user has made a selection
-     * @return true if selection exists
-     */
-    public boolean hasSelection() {
-        return imageCropPanel.hasSelection();
-    }
-
-    /**
-     * Clear the current selection
-     */
-    public void clearSelection() {
-        imageCropPanel.clearSelection();
-    }
-
-    /**
-     * Get the image crop panel
-     * @return ImageCropPanel instance
-     */
     public ImageCropPanel getImagePanel() {
         return imageCropPanel;
+    }
+
+    public JTextArea getTextArea() {
+        return textArea;
     }
 }

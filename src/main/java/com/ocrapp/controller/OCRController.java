@@ -83,6 +83,11 @@ public class OCRController {
         view.getExitMenuItem().addActionListener(e -> handleExit());
         view.getClearMenuItem().addActionListener(e -> handleClear());
         view.getAboutMenuItem().addActionListener(e -> view.showAboutDialog());
+        view.getUndoMenuItem().addActionListener(e -> handleUndo());
+        view.getRedoMenuItem().addActionListener(e -> handleRedo());
+        view.getCutMenuItem().addActionListener(e -> view.getText());
+        view.getPasteMenuItem().addActionListener(e -> handlePaste());
+        view.getSelectAllMenuItem().addActionListener(e -> handleSelectAll());
         
         // Set up callback for region selection
         view.getImagePanel().setOnSelectionComplete(selectedRegion -> {
@@ -472,6 +477,48 @@ public class OCRController {
             // Reset to English
             view.getLanguageComboBox().setSelectedIndex(0);
         }
+    }
+    
+    /**
+     * Handle undo action
+     */
+    private void handleUndo() {
+        try {
+            if (view.getUndoManager().canUndo()) {
+                view.getUndoManager().undo();
+            }
+        } catch (Exception e) {
+            System.err.println("Cannot undo: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Handle redo action
+     */
+    private void handleRedo() {
+        try {
+            if (view.getUndoManager().canRedo()) {
+                view.getUndoManager().redo();
+            }
+        } catch (Exception e) {
+            System.err.println("Cannot redo: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Handle paste action
+     */
+    private void handlePaste() {
+        // Access through view's text area
+        view.getTextArea().paste();
+    }
+
+    /**
+     * Handle select all action
+     */
+    private void handleSelectAll() {
+        view.getTextArea().selectAll();
+        view.getTextArea().requestFocus();
     }
     
     public String getOCREngineInfo() {

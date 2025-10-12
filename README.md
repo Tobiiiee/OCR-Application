@@ -12,15 +12,12 @@ A Java-based Optical Character Recognition (OCR) desktop application built with 
 - **Interactive region selection** - Select specific areas for focused OCR
 - **Multi-language OCR support** (English, Spanish, French, German, Italian, Portuguese, Arabic, Chinese, Japanese, Korean, Russian)
 - **Intelligent dark background detection and inversion** for better accuracy
-- **One-click copy to clipboard** for extracted text
-- **Real-time progress feedback** with smooth animations
 - **Save extracted text** to files
 - **Keyboard shortcuts** (Ctrl+O, Ctrl+S, Ctrl+C, Ctrl+L)
 - **Advanced image preprocessing**:
   - Automatic color inversion for dark backgrounds
   - Grayscale conversion
   - Contrast enhancement
-  - Smart resizing for large images
 
 ## 🛠️ Technologies Used
 
@@ -111,7 +108,7 @@ OCRApplication/
 
 1. Launch the application
 2. Load Image: Click "Load Image" or press Ctrl+O to select an image file
-3. (Optional) Crop Region: Click "Crop Region" to select a specific area for OCR
+3. (Recommended) Select Region: Click "Select Region" to select a specific area for OCR
 4. Extract Text: Click "Extract Text" to perform OCR
 5. View Results: Extracted text appears in the right panel
 6. Copy or Save:
