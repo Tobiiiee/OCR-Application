@@ -5,6 +5,8 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
 import javax.swing.undo.UndoManager;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 
 /**
@@ -70,6 +72,13 @@ public class OCRView extends JFrame {
         setupLayout();
         setupMenuBar();
         configureWindow();
+        setFocusable(true); 
+        addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                requestFocusInWindow(); // click focuses this panel
+            }
+        });
     }
     
     /**
@@ -80,10 +89,12 @@ public class OCRView extends JFrame {
         mainPanel = new JPanel();
         mainPanel.setBorder(new EmptyBorder(10, 10, 10, 10));
         
-        // Image display components - interactive selection panel
+        // Image panel
         imageCropPanel = new ImageCropPanel();
         imageCropPanel.setPreferredSize(new Dimension(550, 500));
         imageCropPanel.setBorder(BorderFactory.createLineBorder(Color.GRAY, 1));
+        
+        imageCropPanel.setDropTarget(null); // Placeholder, controller will set actual target
 
         imageScrollPane = new JScrollPane(imageCropPanel);
         imageScrollPane.setPreferredSize(new Dimension(570, 520));
@@ -431,7 +442,7 @@ public class OCRView extends JFrame {
         saveTextButton.setEnabled(false);
         saveMenuItem.setEnabled(false);
         selectRegionButton.setEnabled(false);
-        selectRegionButton.setText("Select Area"); // Reset button text
+        selectRegionButton.setText("Select Area");
     }
     
     /**
@@ -607,5 +618,9 @@ public class OCRView extends JFrame {
 
     public JTextArea getTextArea() {
         return textArea;
+    }
+    
+    public ImageCropPanel getImageCropPanel() {
+        return imageCropPanel;
     }
 }

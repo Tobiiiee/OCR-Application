@@ -6,10 +6,18 @@ import com.ocrapp.service.OCREngine;
 import com.ocrapp.service.TextProcessor;
 import com.ocrapp.util.FileManager;
 import com.ocrapp.view.OCRView;
+import com.ocrapp.view.ImageDropTarget;
 
 import java.awt.Toolkit;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
+
+import java.awt.dnd.DropTarget;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.Transferable;
+import javax.imageio.ImageIO;
+import javax.swing.AbstractAction;
+import java.awt.event.ActionEvent;
 
 import javax.swing.*;
 import java.awt.image.BufferedImage;
@@ -88,6 +96,11 @@ public class OCRController {
         view.getPasteMenuItem().addActionListener(e -> handlePaste());
         view.getSelectAllMenuItem().addActionListener(e -> handleSelectAll());
         
+        // Set up drag and drop
+        setupDragAndDrop();
+
+        // Set up clipboard paste (Ctrl+V)
+        setupClipboardPaste();
         // Set up callback for region selection
         view.getImagePanel().setOnSelectionComplete(selectedRegion -> {
             handleExtractText(selectedRegion, true);
@@ -97,7 +110,7 @@ public class OCRController {
     private void handleLoadImage() {
         view.setStatus("Selecting image file...");
         
-        // Open file dialog
+        // file dialog
         File selectedFile = fileManager.selectImageFile();
         
         if (selectedFile == null) {
@@ -105,7 +118,6 @@ public class OCRController {
             return;
         }
         
-        // Validate image file
         if (!fileManager.isValidImageFile(selectedFile)) {
             view.showError("Invalid image file selected.\n" +
                           "Please select a valid image file (JPG, PNG, BMP, TIFF, GIF).");
@@ -115,7 +127,7 @@ public class OCRController {
         
         view.setStatus("Loading image...");
         
-        // Load image
+        loadImageFromFile(selectedFile);
         BufferedImage image = imageProcessor.loadImage(selectedFile);
         
         if (image == null) {
@@ -125,13 +137,11 @@ public class OCRController {
             return;
         }
         
-        // Store current image
         this.currentImageFile = selectedFile;
         this.currentImage = image;
         
         view.displayImage(image);
         
-        // Update image info
         String imageInfo = String.format("Image: %s (%dx%d) - %s",
                 selectedFile.getName(),
                 image.getWidth(),
@@ -143,10 +153,8 @@ public class OCRController {
         view.setSelectRegionButtonEnabled(true);
         view.setStatus("Image loaded - Select 'Extract Text' for full image or 'Select Area' for specific regions");
         
-        // Reset state for new image
         extractionCount = 0;
         
-        // Clear previous text
         view.displayText("");
         view.setTextInfo("Text: 0 characters, 0 words");
         view.setSaveButtonEnabled(false);
@@ -320,7 +328,6 @@ public class OCRController {
         
         String defaultFileName = fileManager.generateDefaultSaveFileName(currentImageFile);
         
-        // Open save dialog
         File saveFile = fileManager.selectSaveLocation(defaultFileName);
         
         if (saveFile == null) {
@@ -353,7 +360,6 @@ public class OCRController {
             return;
         }
         
-        // Simply enable selection mode
         view.getImagePanel().setSelectionEnabled(true);
         view.setStatus("Click and drag on the image to select text region to perform OCR on");
         System.out.println("Selection mode enabled");
@@ -512,5 +518,133 @@ public class OCRController {
     
     public boolean hasTextExtracted() {
         return currentResult != null && currentResult.hasText();
+    }
+    
+    /**
+     * Setup drag and drop for image panel
+     */
+    private void setupDragAndDrop() {
+        ImageDropTarget dropTarget = new ImageDropTarget(file -> {
+            // Load dropped file
+            SwingUtilities.invokeLater(() -> loadImageFromFile(file));
+        });
+        
+        view.getImageCropPanel().setDropTarget(new DropTarget(view.getImageCropPanel(), dropTarget));
+        System.out.println("Drag and drop enabled");
+    }
+
+    /**
+     * Setup clipboard paste (Ctrl+V to paste image)
+     */
+    private void setupClipboardPaste() {
+        JRootPane root = view.getRootPane();
+        JComponent imagePanel = view.getImagePanel();
+
+        root.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW)
+            .put(KeyStroke.getKeyStroke("control V"), "pasteImage");
+        root.getActionMap().put("pasteImage", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                handlePasteImage();
+            }
+        });
+
+        // For image panel (if focused)
+        imagePanel.getInputMap(JComponent.WHEN_FOCUSED)
+            .put(KeyStroke.getKeyStroke("control V"), "pasteImage");
+        imagePanel.getActionMap().put("pasteImage", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                handlePasteImage();
+            }
+        });
+
+        System.out.println("Clipboard paste enabled (Ctrl+V for both window and image area)");
+    }
+
+
+    /**
+     * Handle paste image from clipboard
+     */
+    private void handlePasteImage() {
+        try {
+            Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+            Transferable contents = clipboard.getContents(null);
+            
+         // release memory resources
+            if (currentImage != null) {
+                currentImage.flush();     
+                currentImage = null;
+                // System.out.println("Image flushed");
+            }
+            
+            if (contents != null && contents.isDataFlavorSupported(DataFlavor.imageFlavor)) {
+                BufferedImage image = (BufferedImage) contents.getTransferData(DataFlavor.imageFlavor);
+                
+                if (image != null) {
+                    // Create temp file to store image
+                    File tempFile = File.createTempFile("ocr_pasted_", ".png");
+                    tempFile.deleteOnExit();
+                    
+                    ImageIO.write(image, "png", tempFile);
+                    
+                    loadImageFromFile(tempFile);
+                    
+                    view.setStatus("Image pasted from clipboard");
+                    System.out.println("Image pasted from clipboard");
+                }
+            } else {
+                view.setStatus("No image found in clipboard");
+            }
+            
+        } catch (Exception e) {
+            view.showError("Failed to paste image from clipboard:\n" + e.getMessage());
+            System.err.println("Clipboard paste error: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Load image from file (shared by drag-drop, paste, and file picker)
+     */
+    private void loadImageFromFile(File selectedFile) {
+        if (selectedFile == null) {
+            return;
+        }
+        
+        if (!fileManager.isValidImageFile(selectedFile)) {
+            view.showError("Invalid image file.\n" +
+                          "Please use a valid image file (JPG, PNG, BMP, TIFF, GIF).");
+            view.setStatus("Invalid image file");
+            return;
+        }
+        
+        view.setStatus("Loading image...");
+        
+        BufferedImage image = imageProcessor.loadImage(selectedFile);
+        
+        if (image == null) {
+            view.showError("Failed to load image.\n" +
+                          "The file may be corrupted or in an unsupported format.");
+            view.setStatus("Failed to load image");
+            return;
+        }
+        
+        this.currentImageFile = selectedFile;
+        this.currentImage = image;
+        
+        view.displayImage(image);
+        
+        String imageInfo = String.format("Image: %s (%dx%d) - %s",
+                selectedFile.getName(),
+                image.getWidth(),
+                image.getHeight(),
+                fileManager.getFormattedFileSize(selectedFile));
+        view.setImageInfo(imageInfo);
+        
+        view.setExtractButtonEnabled(true);
+        view.setSelectRegionButtonEnabled(true);
+        view.setStatus("Image loaded - Select 'Extract Text' for full image or 'Select Area' for specific regions");
+        
+        System.out.println("Image loaded: " + selectedFile.getAbsolutePath());
     }
 }
