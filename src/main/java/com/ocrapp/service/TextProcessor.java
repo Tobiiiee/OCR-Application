@@ -11,7 +11,6 @@ public class TextProcessor {
     
     // Common OCR error patterns, need to add more later
     private static final Pattern MULTIPLE_SPACES = Pattern.compile("[ \t]+");
-    private static final Pattern MULTIPLE_NEWLINES = Pattern.compile("\n{3,}");
     private static final Pattern TRAILING_SPACES = Pattern.compile("[ \t]+$", Pattern.MULTILINE);
     private static final Pattern LEADING_SPACES = Pattern.compile("^[ \t]+", Pattern.MULTILINE);
     
@@ -120,10 +119,8 @@ public class TextProcessor {
         if (text == null) {
             return "";
         }
-        
-        // Replace 3 or more newlines with just 2
-        Matcher matcher = MULTIPLE_NEWLINES.matcher(text);
-        return matcher.replaceAll("\n\n");
+
+        return text.replaceAll("\n{2,}", "\n");
     }
     
     /**

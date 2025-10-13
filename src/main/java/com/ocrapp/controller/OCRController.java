@@ -188,61 +188,40 @@ public class OCRController {
         
         // Process in a separate thread to keep UI responsive
         SwingWorker<OCRResult, Void> worker = new SwingWorker<OCRResult, Void>() {
-            @Override
-            protected OCRResult doInBackground() throws Exception {
-                // Step 1: Preprocessing (0-30%)
-                updateProgressSmooth(0, 15, "Analyzing image...");
-                
-                updateProgressSmooth(15, 30, "Preprocessing image...");
-                BufferedImage processedImage = imageProcessor.preprocessImage(imageToProcess);
-                
-                if (processedImage == null) {
-                    throw new Exception("Image preprocessing failed");
-                }
-                
-                SwingUtilities.invokeLater(() -> 
-                    view.updateProgress(30, "Preprocessing complete"));
-                
-                // Step 2: OCR Processing (30-80%)
-                updateProgressSmooth(30, 40, "Initializing OCR engine...");
-                updateProgressSmooth(40, 50, "Extracting text...");
-                
-                // Perform OCR
-                OCRResult result = ocrEngine.extractText(currentImageFile, processedImage);
-                
-                if (result == null) {
-                    throw new Exception("OCR extraction failed");
-                }
-                
-                updateProgressSmooth(50, 80, "Processing text...");
-                
-                SwingUtilities.invokeLater(() -> 
-                    view.updateProgress(80, "Text extracted"));
-                
-                // Step 3: Text Processing (80-100%)
-                updateProgressSmooth(80, 90, "Cleaning text...");
-                updateProgressSmooth(90, 100, "Formatting text...");
-                
-                SwingUtilities.invokeLater(() -> 
-                    view.updateProgress(100, "Complete!"));
-                
-                return result;
-            }
+        	@Override
+        	protected OCRResult doInBackground() throws Exception {
+        	    // Step 1: Preprocessing (0-30%)
+        	    SwingUtilities.invokeLater(() -> view.updateProgress(0, "Analyzing image..."));
+        	    SwingUtilities.invokeLater(() -> view.updateProgress(15, "Preprocessing image..."));
+        	    
+        	    BufferedImage processedImage = imageProcessor.preprocessImage(imageToProcess);
+        	    
+        	    if (processedImage == null) {
+        	        throw new Exception("Image preprocessing failed");
+        	    }
+        	    
+        	    SwingUtilities.invokeLater(() -> view.updateProgress(30, "Preprocessing complete"));
+        	    
+        	    // Step 2: OCR Processing (30-80%)
+        	    SwingUtilities.invokeLater(() -> view.updateProgress(40, "Initializing OCR engine..."));
+        	    SwingUtilities.invokeLater(() -> view.updateProgress(50, "Extracting text..."));
+        	    
+        	    // Perform OCR (this is where the REAL work happens)
+        	    OCRResult result = ocrEngine.extractText(currentImageFile, processedImage);
+        	    
+        	    if (result == null) {
+        	        throw new Exception("OCR extraction failed");
+        	    }
+        	    
+        	    SwingUtilities.invokeLater(() -> view.updateProgress(80, "Text extracted"));
+        	    
+        	    // Step 3: Text Processing (80-100%)
+        	    SwingUtilities.invokeLater(() -> view.updateProgress(90, "Cleaning text..."));
+        	    SwingUtilities.invokeLater(() -> view.updateProgress(100, "Complete!"));
+        	    
+        	    return result;
+        	}
             
-            /**
-             * Smoothly update progress from start to end value
-             */
-            private void updateProgressSmooth(int start, int end, String message) throws InterruptedException {
-                int steps = (end - start);
-                int delay = Math.max(20, 150 / steps);
-                
-                for (int i = start; i <= end; i++) {
-                    final int progress = i;
-                    SwingUtilities.invokeLater(() -> 
-                        view.updateProgress(progress, message));
-                    Thread.sleep(delay);
-                }
-            }
             
             @Override
             protected void done() {
@@ -257,7 +236,7 @@ public class OCRController {
                     // Combine with existing text if appending
                     String finalText;
                     if (shouldAppend && !cleanedText.trim().isEmpty()) {
-                        finalText = existingText + "\n" + cleanedText;
+                        finalText = existingText + "\n\n" + cleanedText;
                         extractionCount++;
                     } else {
                         finalText = cleanedText;
