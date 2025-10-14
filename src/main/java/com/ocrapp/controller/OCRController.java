@@ -77,7 +77,6 @@ public class OCRController {
      */
     private void initializeListeners() {
         view.getLoadImageButton().addActionListener(e -> handleLoadImage());
-        view.getSelectRegionButton().addActionListener(e -> handleSelectRegion());
         view.getExtractTextButton().addActionListener(e -> handleExtractText(currentImage, false));
         view.getSaveTextButton().addActionListener(e -> handleSaveText());
         view.getClearButton().addActionListener(e -> handleClear());
@@ -151,7 +150,6 @@ public class OCRController {
         // Disable buttons during processing
         view.setExtractButtonEnabled(false);
         view.getLoadImageButton().setEnabled(false);
-        view.setSelectRegionButtonEnabled(false);
         
         view.showProgress("Initializing...");
         view.setStatus(statusMessage);
@@ -261,7 +259,6 @@ public class OCRController {
                     view.hideProgress();
                     view.setExtractButtonEnabled(true);
                     view.getLoadImageButton().setEnabled(true);
-                    view.setSelectRegionButtonEnabled(true);
                     
                     if (appendText) {
                         view.clearSelection();
@@ -306,20 +303,6 @@ public class OCRController {
                          "Please check file permissions and try again.");
             view.setStatus("Failed to save text");
         }
-    }
-    
-    /**
-     * Handle Select Region button click - toggles selection mode
-     */
-    private void handleSelectRegion() {
-        if (currentImage == null) {
-            view.showError("No image loaded.\nPlease load an image first.");
-            return;
-        }
-        
-        view.getImagePanel().setSelectionEnabled(true);
-        view.setStatus("Click and drag on the image to select text region to perform OCR on");
-        System.out.println("Selection mode enabled");
     }
     
     /**
@@ -374,7 +357,6 @@ public class OCRController {
             imageProcessor.clearCurrentImage();
             
             view.clearAll();
-            view.getSelectRegionButton().setText("Select Area");
             
             System.out.println("Application cleared");
         }
@@ -599,7 +581,6 @@ public class OCRController {
         view.setImageInfo(imageInfo);
         
         view.setExtractButtonEnabled(true);
-        view.setSelectRegionButtonEnabled(true);
         view.setStatus("Image loaded - Select 'Extract Text' for full image or 'Select Area' for specific regions");
         
         System.out.println("Image loaded: " + selectedFile.getAbsolutePath());

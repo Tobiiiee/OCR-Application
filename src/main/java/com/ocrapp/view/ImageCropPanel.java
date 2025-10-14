@@ -133,14 +133,20 @@ public class ImageCropPanel extends JPanel {
         addMouseListener(mouseAdapter);
         addMouseMotionListener(mouseAdapter);
         
-        // Change cursor based on selection mode
+        // Auto-enable selection when hovering over image with loaded image
         addMouseMotionListener(new MouseMotionAdapter() {
             @Override
             public void mouseMoved(MouseEvent e) {
-                if (image != null && selectionEnabled) {
+                if (image != null) {
+                    // Auto-enable selection mode when hovering
+                    if (!selectionEnabled) {
+                        selectionEnabled = true;
+                        repaint();
+                    }
                     setCursor(Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
                 } else {
                     setCursor(Cursor.getDefaultCursor());
+                    selectionEnabled = false;
                 }
             }
         });

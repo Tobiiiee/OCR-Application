@@ -34,7 +34,6 @@ public class OCRView extends JFrame {
     private JButton extractTextButton;
     private JButton saveTextButton;
     private JButton clearButton;
-    private JButton selectRegionButton;
     
     private JLabel statusLabel;
     private JLabel imageInfoLabel;
@@ -137,13 +136,7 @@ public class OCRView extends JFrame {
         loadImageButton.setFont(new Font("Arial", Font.BOLD, 14));
         loadImageButton.setPreferredSize(new Dimension(150, 40));
         loadImageButton.setToolTipText("Load an image file for OCR processing");
-        
-        selectRegionButton = new JButton("Select Area");
-        selectRegionButton.setFont(new Font("Arial", Font.BOLD, 14));
-        selectRegionButton.setPreferredSize(new Dimension(150, 40));
-        selectRegionButton.setEnabled(false);
-        selectRegionButton.setToolTipText("Select a specific region from the image for OCR");
-        
+      
         extractTextButton = new JButton("Extract Text");
         extractTextButton.setFont(new Font("Arial", Font.BOLD, 14));
         extractTextButton.setPreferredSize(new Dimension(150, 40));
@@ -225,7 +218,6 @@ public class OCRView extends JFrame {
     	// Button panel - removed clearSelectionButton
     	JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 10));
     	buttonPanel.add(loadImageButton);
-    	buttonPanel.add(selectRegionButton);
     	buttonPanel.add(extractTextButton);
     	buttonPanel.add(saveTextButton);
     	buttonPanel.add(clearButton);
@@ -441,8 +433,6 @@ public class OCRView extends JFrame {
         extractTextButton.setEnabled(false);
         saveTextButton.setEnabled(false);
         saveMenuItem.setEnabled(false);
-        selectRegionButton.setEnabled(false);
-        selectRegionButton.setText("Select Area");
     }
     
     /**
@@ -527,9 +517,6 @@ public class OCRView extends JFrame {
         imageCropPanel.clearSelection();
     }
     
-    public void setSelectRegionButtonEnabled(boolean enabled) {
-        selectRegionButton.setEnabled(enabled);
-    }
     // ========== Getters for Buttons (for Controller to add listeners) ==========
     
     public JButton getLoadImageButton() {
@@ -574,10 +561,6 @@ public class OCRView extends JFrame {
     
     public JComboBox<String> getLanguageComboBox() {
         return languageComboBox;
-    }
-    
-    public JButton getSelectRegionButton() {
-        return selectRegionButton;
     }
     
     public JMenuItem getCopyMenuItem() {
