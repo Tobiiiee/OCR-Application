@@ -49,15 +49,13 @@ public class LineNumberPanel extends JPanel {
         Graphics2D g2d = (Graphics2D) g;
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         
-        // Get font metrics
         FontMetrics fm = textArea.getFontMetrics(textArea.getFont());
         int fontHeight = fm.getHeight();
         
-        // Get the number of lines
         Element root = textArea.getDocument().getDefaultRootElement();
         int lineCount = root.getElementCount();
         
-        // Calculate width needed for line numbers
+        // width needed for line numbers
         int maxDigits = String.valueOf(lineCount).length();
         int width = fm.stringWidth("0") * maxDigits + 2 * MARGIN;
         
@@ -66,7 +64,6 @@ public class LineNumberPanel extends JPanel {
             revalidate();
         }
         
-        // Draw line numbers
         g2d.setColor(LINE_NUMBER_COLOR);
         g2d.setFont(textArea.getFont());
         

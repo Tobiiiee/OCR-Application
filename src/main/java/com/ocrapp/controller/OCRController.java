@@ -96,12 +96,10 @@ public class OCRController {
         view.getPasteMenuItem().addActionListener(e -> handlePaste());
         view.getSelectAllMenuItem().addActionListener(e -> handleSelectAll());
         
-        // Set up drag and drop
+        // drag & drop and paste from clipboard
         setupDragAndDrop();
-
-        // Set up clipboard paste (Ctrl+V)
         setupClipboardPaste();
-        // Set up callback for region selection
+        
         view.getImagePanel().setOnSelectionComplete(selectedRegion -> {
             handleExtractText(selectedRegion, true);
         });
@@ -128,38 +126,6 @@ public class OCRController {
         view.setStatus("Loading image...");
         
         loadImageFromFile(selectedFile);
-        BufferedImage image = imageProcessor.loadImage(selectedFile);
-        
-        if (image == null) {
-            view.showError("Failed to load image.\n" +
-                          "The file may be corrupted or in an unsupported format.");
-            view.setStatus("Failed to load image");
-            return;
-        }
-        
-        this.currentImageFile = selectedFile;
-        this.currentImage = image;
-        
-        view.displayImage(image);
-        
-        String imageInfo = String.format("Image: %s (%dx%d) - %s",
-                selectedFile.getName(),
-                image.getWidth(),
-                image.getHeight(),
-                fileManager.getFormattedFileSize(selectedFile));
-        view.setImageInfo(imageInfo);
-        
-        view.setExtractButtonEnabled(true);
-        view.setSelectRegionButtonEnabled(true);
-        view.setStatus("Image loaded - Select 'Extract Text' for full image or 'Select Area' for specific regions");
-        
-        extractionCount = 0;
-        
-        view.displayText("");
-        view.setTextInfo("Text: 0 characters, 0 words");
-        view.setSaveButtonEnabled(false);
-        
-        System.out.println("Image loaded: " + selectedFile.getAbsolutePath());
     }
     
     /**
@@ -173,11 +139,8 @@ public class OCRController {
             return;
         }
         
-        // Store existing text if appending
         final String existingText = appendText ? view.getText() : "";
-        final boolean shouldAppend = appendText && !existingText.trim().isEmpty();
-        
-        // Determine status message
+        final boolean shouldAppend = appendText && !existingText.trim().isEmpty(); 
         final String statusMessage = appendText ? 
             "Processing selected region..." : "Processing entire image...";
         
@@ -190,7 +153,6 @@ public class OCRController {
         view.getLoadImageButton().setEnabled(false);
         view.setSelectRegionButtonEnabled(false);
         
-        // Show progress bar
         view.showProgress("Initializing...");
         view.setStatus(statusMessage);
         
@@ -234,43 +196,40 @@ public class OCRController {
             @Override
             protected void done() {
                 try {
-                    // Get result
                     OCRResult result = get();
                     
-                    // Clean and format text
                     String cleanedText = textProcessor.cleanText(result.getExtractedText());
                     result.setExtractedText(cleanedText);
                     
-                    // Combine with existing text if appending
                     String finalText;
                     if (shouldAppend && !cleanedText.trim().isEmpty()) {
                         finalText = existingText + "\n\n" + cleanedText;
                         extractionCount++;
-                    } else {
+                    } else if (!cleanedText.trim().isEmpty()) {
                         finalText = cleanedText;
-                        extractionCount = cleanedText.trim().isEmpty() ? 0 : 1;
+                        extractionCount = 1;
+                    } else {
+                        finalText = existingText;
+                        extractionCount = existingText.trim().isEmpty() ? 0 : extractionCount;
                     }
                     
-                    // Update current result (combine stats if appending)
+                    // combine stats if appending
                     if (shouldAppend && currentResult != null) {
                         currentResult.setExtractedText(finalText);
-                        // Note: confidence is averaged, counts are summed
+                        // confidence is averaged, counts are summed
                     } else {
                         currentResult = result;
                         currentResult.setExtractedText(finalText);
                     }
                     
-                    // Display combined text
                     view.displayText(finalText);
                     
-                    // Update text info
                     int totalChars = finalText.length();
                     int totalWords = textProcessor.countWords(finalText);
                     String textInfo = String.format("Text: %d characters, %d words - Extractions: %d",
                             totalChars, totalWords, extractionCount);
                     view.setTextInfo(textInfo);
                     
-                    // Enable save button if text was extracted
                     if (!finalText.trim().isEmpty()) {
                         view.setSaveButtonEnabled(true);
                         view.getCopyMenuItem().setEnabled(true);
@@ -299,13 +258,11 @@ public class OCRController {
                     System.err.println("OCR error: " + e.getMessage());
                     e.printStackTrace();
                 } finally {
-                    // Hide progress bar and re-enable buttons
                     view.hideProgress();
                     view.setExtractButtonEnabled(true);
                     view.getLoadImageButton().setEnabled(true);
                     view.setSelectRegionButtonEnabled(true);
                     
-                    // Clear selection after processing
                     if (appendText) {
                         view.clearSelection();
                     }
@@ -570,18 +527,17 @@ public class OCRController {
         try {
             Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
             Transferable contents = clipboard.getContents(null);
-            
-         // release memory resources
-            if (currentImage != null) {
-                currentImage.flush();     
-                currentImage = null;
-                // System.out.println("Image flushed");
-            }
-            
+                     
             if (contents != null && contents.isDataFlavorSupported(DataFlavor.imageFlavor)) {
                 BufferedImage image = (BufferedImage) contents.getTransferData(DataFlavor.imageFlavor);
                 
                 if (image != null) {
+                    // release memory resources
+                    if (currentImage != null) {
+                        currentImage.flush();     
+                        currentImage = null;
+                        System.out.println("Previous Image flushed");
+                    }
                     // Create temp file to store image
                     File tempFile = File.createTempFile("ocr_pasted_", ".png");
                     tempFile.deleteOnExit();
@@ -595,6 +551,7 @@ public class OCRController {
                 }
             } else {
                 view.setStatus("No image found in clipboard");
+                System.out.println("No image was found in clipboard. Use valid formats.");
             }
             
         } catch (Exception e) {
