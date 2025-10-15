@@ -128,6 +128,14 @@ public class ImageCropPanel extends JPanel {
                     }
                 }
             }
+            @Override
+            public void mouseExited(MouseEvent e) {
+                if (selectionEnabled && !isDragging) {
+                    selectionEnabled = false;
+                    repaint();
+                }
+                setCursor(Cursor.getDefaultCursor());
+            }
         };
         
         addMouseListener(mouseAdapter);
