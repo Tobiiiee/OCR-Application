@@ -1,5 +1,7 @@
 package com.ocrapp.view;
 
+import com.ocrapp.util.AppPreferences;
+
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
@@ -179,6 +181,15 @@ public class OCRView extends JFrame {
         languageComboBox = new JComboBox<>(languages);
         languageComboBox.setPreferredSize(new Dimension(150, 30));
         languageComboBox.setToolTipText("Select OCR language");
+        
+     // Load last selected language from preferences
+        String lastLanguage = AppPreferences.getLastLanguage();
+        for (int i = 0; i < languageComboBox.getItemCount(); i++) {
+            if (languageComboBox.getItemAt(i).equals(lastLanguage)) {
+                languageComboBox.setSelectedIndex(i);
+                break;
+            }
+        }
         
         // Progress bar
         progressBar = new JProgressBar(0, 100);

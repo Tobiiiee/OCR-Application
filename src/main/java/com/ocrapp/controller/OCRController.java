@@ -7,6 +7,7 @@ import com.ocrapp.service.TextProcessor;
 import com.ocrapp.util.FileManager;
 import com.ocrapp.view.OCRView;
 import com.ocrapp.view.ImageDropTarget;
+import com.ocrapp.util.AppPreferences;
 
 import java.awt.Toolkit;
 import java.awt.datatransfer.Clipboard;
@@ -68,6 +69,7 @@ public class OCRController {
             view.showError("Failed to initialize OCR Engine.\n" +
                           "Please ensure Tesseract is installed correctly.");
         } else {
+        	validateAndSetSavedLanguage();
             view.setStatus("Ready - OCR Engine initialized successfully");
         }
     }
@@ -388,6 +390,8 @@ public class OCRController {
         boolean success = ocrEngine.setLanguage(languageCode);
         
         if (success) {
+        	AppPreferences.saveLastLanguage(selectedLanguage);
+        	 
             view.setStatus("Language changed to: " + selectedLanguage);
             System.out.println("OCR language changed to: " + selectedLanguage + " (" + languageCode + ")");
         } else {
@@ -584,5 +588,34 @@ public class OCRController {
         view.setStatus("Image loaded - Select 'Extract Text' for full image or 'Select Area' for specific regions");
         
         System.out.println("Image loaded: " + selectedFile.getAbsolutePath());
+    }
+    
+    /**
+     * Validate and set the saved language preference
+     * Falls back to English if saved language is not available
+     */
+    private void validateAndSetSavedLanguage() {
+        String savedLanguage = AppPreferences.getLastLanguage();
+        String languageCode = OCREngine.mapLanguageToCode(savedLanguage);
+        
+        boolean success = ocrEngine.setLanguage(languageCode);
+        
+        if (!success) {
+            // last used language not found anymore, reset to English
+            System.out.println("Saved language '" + savedLanguage + "' not available. Resetting to English.");
+            
+            view.getLanguageComboBox().setSelectedIndex(0); // set to english
+            AppPreferences.saveLastLanguage("English");
+            ocrEngine.setLanguage("eng");
+            
+            view.showInfo(
+                "Language data for '" + savedLanguage + "' was not found.\n\n" +
+                "Resetting to English.\n\n" +
+                "To use other languages, download language data from:\n" +
+                "https://github.com/tesseract-ocr/tessdata"
+            );
+        } else {
+            System.out.println("Language restored from preferences: " + savedLanguage);
+        }
     }
 }
