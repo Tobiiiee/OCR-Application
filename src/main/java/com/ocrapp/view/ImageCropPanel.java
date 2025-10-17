@@ -1,5 +1,6 @@
 package com.ocrapp.view;
 
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
@@ -27,14 +28,13 @@ public class ImageCropPanel extends JPanel {
     private double scaleX;
     private double scaleY;
     
-    private static final Color SELECTION_COLOR = new Color(0, 120, 215, 100);
-    private static final Color BORDER_COLOR = new Color(0, 120, 215);
+    private static final Color SELECTION_COLOR = Theme.getSelectionFill();
+    private static final Color BORDER_COLOR = Theme.getSelectionBorder();
     private static final BasicStroke BORDER_STROKE = new BasicStroke(2.0f);
     
     private int imageXOffset;
     private int imageYOffset;
     
-    // Callback for when selection is complete
     private Consumer<BufferedImage> onSelectionComplete;
 
     /**
@@ -47,7 +47,7 @@ public class ImageCropPanel extends JPanel {
         this.scaleX = 1.0;
         this.scaleY = 1.0;
         
-        setBackground(Color.WHITE);
+        setBackground(Theme.getBgSecondary());
         setPreferredSize(new Dimension(600, 400));
         
         setupMouseListeners();
@@ -329,7 +329,7 @@ public class ImageCropPanel extends JPanel {
                 g2d.drawString(dimensions, selectionRect.x + 10, selectionRect.y + 20);
             }
         } else {
-            g2d.setColor(Color.GRAY);
+            g2d.setColor(Theme.getTextSecondary());
             String message = "No image loaded";
             FontMetrics fm = g2d.getFontMetrics();
             int x = (getWidth() - fm.stringWidth(message)) / 2;

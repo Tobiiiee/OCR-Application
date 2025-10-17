@@ -2,6 +2,7 @@ package com.ocrapp.main;
 
 import com.ocrapp.controller.OCRController;
 import com.ocrapp.view.OCRView;
+import com.formdev.flatlaf.FlatDarkLaf;
 
 import javax.swing.*;
 
@@ -16,20 +17,22 @@ public class OCRApplication {
      * @param args Command line arguments (not used)
      */
     public static void main(String[] args) {
-    	
+        try {
+            // FlatLaf dark theme
+            FlatDarkLaf.setup();
+
+            UIManager.put("Button.arc", 10);
+            UIManager.put("Component.arc", 10);
+            UIManager.put("TextComponent.arc", 10);
+            
+        } catch (Exception e) {
+            System.err.println("Failed to setup FlatLaf: " + e.getMessage());
+        }
+        
         System.out.println("========================================");
         System.out.println("   OCR Application Starting...        ");
         System.out.println("========================================");
         System.out.println("Initializing components...");
-        
-        // Set system look & feel
-        try {
-            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-            System.out.println("UI Look and Feel set successfully");
-        } catch (Exception e) {
-            System.err.println("Failed to set Look and Feel: " + e.getMessage());
-            // default look & feel
-        }
         
         // Launch application on Event Dispatch Thread (EDT)
         SwingUtilities.invokeLater(() -> {

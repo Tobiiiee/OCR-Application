@@ -4,12 +4,14 @@ import com.ocrapp.util.AppPreferences;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
-import javax.swing.border.TitledBorder;
 import javax.swing.undo.UndoManager;
 import java.awt.*;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
+
 
 /**
  * Main GUI view for the OCR Application.
@@ -36,6 +38,7 @@ public class OCRView extends JFrame {
     private JButton extractTextButton;
     private JButton saveTextButton;
     private JButton clearButton;
+    private JButton copyClipboardButton;
     
     private JLabel statusLabel;
     private JLabel imageInfoLabel;
@@ -69,6 +72,8 @@ public class OCRView extends JFrame {
     private static final String WINDOW_TITLE = "OCR Application - Text Extraction by Tobiiiee";
     
     public OCRView() {
+    	
+    	applyThemeDefaults();
         initializeComponents();
         setupLayout();
         setupMenuBar();
@@ -88,33 +93,73 @@ public class OCRView extends JFrame {
     private void initializeComponents() {
         // Main panel
         mainPanel = new JPanel();
-        mainPanel.setBorder(new EmptyBorder(10, 10, 10, 10));
+        mainPanel.setBackground(Theme.getBgPrimary());
+        mainPanel.setBorder(new EmptyBorder(0, 0, 0, 0));
         
         // Image panel
         imageCropPanel = new ImageCropPanel();
         imageCropPanel.setPreferredSize(new Dimension(550, 500));
-        imageCropPanel.setBorder(BorderFactory.createLineBorder(Color.GRAY, 1));
+        imageCropPanel.setBackground(Theme.getBgSecondary());
+        imageCropPanel.setBorder(BorderFactory.createMatteBorder(0, 0, 0, 1, Theme.getBorder()));
         
         imageCropPanel.setDropTarget(null); // Placeholder, controller will set actual target
 
         imageScrollPane = new JScrollPane(imageCropPanel);
         imageScrollPane.setPreferredSize(new Dimension(570, 520));
 
-        imagePanelContainer = new JPanel(new BorderLayout());
-        imagePanelContainer.setBorder(new TitledBorder("Image Preview"));
-        imagePanelContainer.add(imageScrollPane, BorderLayout.CENTER);
+        JPanel imageHeaderPanel = new JPanel(new BorderLayout());
+        imageHeaderPanel.setBackground(Theme.getBgSecondary());
+        imageHeaderPanel.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, Theme.getBorder()));
 
-        imageInfoLabel = new JLabel("Image: None");
-        imageInfoLabel.setBorder(new EmptyBorder(5, 5, 5, 5));
-        imagePanelContainer.add(imageInfoLabel, BorderLayout.SOUTH);
+        JLabel imageHeaderLabel = new JLabel("Image Preview");
+        imageHeaderLabel.setFont(Theme.FONT_MEDIUM);
+        imageHeaderLabel.setForeground(Theme.getTextPrimary());
+        imageHeaderLabel.setBorder(new EmptyBorder(12, 15, 12, 15));
+        imageHeaderPanel.add(imageHeaderLabel, BorderLayout.WEST);
         
+        imagePanelContainer = new JPanel(new BorderLayout());
+        imagePanelContainer.setBackground(Theme.getBgSecondary());
+        imagePanelContainer.add(imageHeaderPanel, BorderLayout.NORTH);
+        imagePanelContainer.add(imageScrollPane, BorderLayout.CENTER);
+      
+        imageInfoLabel = new JLabel("Image: None");
+        imageInfoLabel.setFont(Theme.FONT_REGULAR);
+        imageInfoLabel.setForeground(Theme.getTextSecondary());
+        imageInfoLabel.setBorder(new EmptyBorder(8, 15, 8, 15));
+        imagePanelContainer.add(imageInfoLabel, BorderLayout.SOUTH);
+
         textArea = new JTextArea();
-        textArea.setFont(new Font("Monospaced", Font.PLAIN, 12));
+        textArea.setFont(Theme.FONT_MONO);
+        textArea.setBackground(Theme.getBgTertiary());
+        textArea.setForeground(Theme.getTextPrimary());
+        textArea.setCaretColor(Theme.getTextPrimary());
         textArea.setLineWrap(true);
         textArea.setWrapStyleWord(true);
         textArea.setEditable(true);
         
         undoManager = new UndoManager();
+        textArea.addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyPressed(KeyEvent e) {
+                if (e.isControlDown()) {
+                    if (e.getKeyCode() == KeyEvent.VK_Z) {
+                        if (undoManager.canUndo()) {
+                            undoManager.undo();
+                            updateUndoRedoState();
+                        }
+                        e.consume();
+                    } else if (e.getKeyCode() == KeyEvent.VK_Y) {
+                        if (undoManager.canRedo()) {
+                            undoManager.redo();
+                            updateUndoRedoState();
+                        }
+                        e.consume();
+                    }
+                }
+            }
+        });
+
+
         textArea.getDocument().addUndoableEditListener(e -> {
             undoManager.addEdit(e.getEdit());
             updateUndoRedoState();
@@ -125,33 +170,52 @@ public class OCRView extends JFrame {
         lineNumberPanel = new LineNumberPanel(textArea);
         textScrollPane.setRowHeaderView(lineNumberPanel);
         
-        JPanel textPanel = new JPanel(new BorderLayout());
-        textPanel.setBorder(new TitledBorder("Extracted Text"));
-        textPanel.add(textScrollPane, BorderLayout.CENTER);
-        
         textInfoLabel = new JLabel("Text: 0 characters, 0 words");
-        textInfoLabel.setBorder(new EmptyBorder(5, 5, 5, 5));
+        textInfoLabel.setFont(Theme.FONT_REGULAR);
+        textInfoLabel.setForeground(Theme.getTextSecondary());
+        textInfoLabel.setBackground(Theme.getBgTertiary());
+        textInfoLabel.setOpaque(true);
+        textInfoLabel.setBorder(new EmptyBorder(8, 15, 8, 15));
+        
+        JPanel textHeaderPanel = new JPanel(new BorderLayout());
+        textHeaderPanel.setBackground(Theme.getBgTertiary());
+        textHeaderPanel.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, Theme.getBorder()));
+
+        JLabel textHeaderLabel = new JLabel("Extracted Text");
+        textHeaderLabel.setFont(Theme.FONT_MEDIUM);
+        textHeaderLabel.setForeground(Theme.getTextPrimary());
+        textHeaderLabel.setBorder(new EmptyBorder(12, 15, 12, 15));
+        textHeaderPanel.add(textHeaderLabel, BorderLayout.WEST);
+        
+        JPanel textPanel = new JPanel(new BorderLayout());
+        textPanel.setBackground(Theme.getBgTertiary());
+        textPanel.add(textHeaderPanel, BorderLayout.NORTH);
+        textPanel.add(textScrollPane, BorderLayout.CENTER);
         textPanel.add(textInfoLabel, BorderLayout.SOUTH);
         
         // Buttons
-        loadImageButton = new JButton("Load Image");
+        loadImageButton = createStyledButton("Open", 120, 35);
         loadImageButton.setFont(new Font("Arial", Font.BOLD, 14));
         loadImageButton.setPreferredSize(new Dimension(150, 40));
         loadImageButton.setToolTipText("Load an image file for OCR processing");
       
-        extractTextButton = new JButton("Extract Text");
+        extractTextButton = createStyledButton("Extract All", 120, 35);
         extractTextButton.setFont(new Font("Arial", Font.BOLD, 14));
         extractTextButton.setPreferredSize(new Dimension(150, 40));
-        extractTextButton.setEnabled(false);
         extractTextButton.setToolTipText("Perform OCR on the entire loaded image");
         
-        saveTextButton = new JButton("Save Text");
+        copyClipboardButton = createStyledButton("Copy All", 120, 35);
+        copyClipboardButton.setFont(new Font("Arial", Font.BOLD, 14));
+        copyClipboardButton.setPreferredSize(new Dimension(150, 40));
+        copyClipboardButton.setToolTipText("Perform OCR on the entire loaded image");
+        
+        saveTextButton = createStyledButton("Save Text", 120, 35);
         saveTextButton.setFont(new Font("Arial", Font.BOLD, 14));
         saveTextButton.setPreferredSize(new Dimension(150, 40));
         saveTextButton.setEnabled(false);
         saveTextButton.setToolTipText("Save extracted text to a file");
         
-        clearButton = new JButton("Clear All");
+        clearButton = createStyledButton("Clear All", 120, 35, Theme.getError());
         clearButton.setFont(new Font("Arial", Font.BOLD, 14));
         clearButton.setPreferredSize(new Dimension(150, 40));
         clearButton.setToolTipText("Clear image and text");
@@ -161,8 +225,9 @@ public class OCRView extends JFrame {
         clearMenuItem.setMnemonic('L');
         
         // Language selection
-        languageLabel = new JLabel("OCR Language:");
-        languageLabel.setFont(new Font("Arial", Font.PLAIN, 12));
+        languageLabel = new JLabel("Select Language:");
+        languageLabel.setFont(Theme.FONT_REGULAR);
+        languageLabel.setForeground(Theme.getTextPrimary());
 
         String[] languages = {
             "English",
@@ -179,10 +244,12 @@ public class OCRView extends JFrame {
         };
 
         languageComboBox = new JComboBox<>(languages);
-        languageComboBox.setPreferredSize(new Dimension(150, 30));
-        languageComboBox.setToolTipText("Select OCR language");
+        languageComboBox.setFont(Theme.FONT_REGULAR);
+        languageComboBox.setBackground(Theme.getBgPrimary());
+        languageComboBox.setPreferredSize(new Dimension(150, 40));
+        languageComboBox.setBorder(BorderFactory.createLineBorder(Theme.getBorder()));
         
-     // Load last selected language from preferences
+        // Load last selected language
         String lastLanguage = AppPreferences.getLastLanguage();
         for (int i = 0; i < languageComboBox.getItemCount(); i++) {
             if (languageComboBox.getItemAt(i).equals(lastLanguage)) {
@@ -194,20 +261,25 @@ public class OCRView extends JFrame {
         // Progress bar
         progressBar = new JProgressBar(0, 100);
         progressBar.setStringPainted(true);
-        progressBar.setVisible(false); // Hidden by default
-        progressBar.setPreferredSize(new Dimension(400, 25));
-        progressBar.setForeground(new Color(76, 175, 80));
-        
+        progressBar.setVisible(false);
+        progressBar.setPreferredSize(new Dimension(400, 20));
+        progressBar.setBackground(Theme.getBgTertiary());
+        progressBar.setForeground(Theme.getAccent());
+        progressBar.setBorderPainted(false);
+
         progressLabel = new JLabel("");
+        progressLabel.setFont(Theme.FONT_REGULAR);
+        progressLabel.setForeground(Theme.getTextSecondary());
         progressLabel.setVisible(false);
         
         // Status label
-        statusLabel = new JLabel("Ready");
-        statusLabel.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(Color.GRAY),
-                new EmptyBorder(5, 10, 5, 10)
-        ));
-        
+        statusLabel = new JLabel("Ready - OCR Engine successfully initialized");
+        statusLabel.setFont(Theme.FONT_REGULAR);
+        statusLabel.setForeground(Theme.getTextSecondary());
+        statusLabel.setBackground(Theme.getBgSecondary());
+        statusLabel.setOpaque(true);
+        statusLabel.setBorder(BorderFactory.createEmptyBorder(8, 15, 8, 15));
+  
         // Split panes for image and text
         JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, imagePanelContainer, textPanel);
         splitPane.setDividerLocation(580);
@@ -222,21 +294,25 @@ public class OCRView extends JFrame {
      */
     private void setupLayout() {
     	// Language selection panel
-    	JPanel languagePanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 5));
+    	JPanel languagePanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 15, 10));
+    	languagePanel.setBackground(Theme.getBgSecondary());
     	languagePanel.add(languageLabel);
     	languagePanel.add(languageComboBox);
+    	languagePanel.add(loadImageButton);
 
-    	// Button panel - removed clearSelectionButton
-    	JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 10));
-    	buttonPanel.add(loadImageButton);
+    	// Button panel
+    	JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 15, 10));
+    	buttonPanel.setBackground(Theme.getBgSecondary());
     	buttonPanel.add(extractTextButton);
-    	buttonPanel.add(saveTextButton);
+    	buttonPanel.add(copyClipboardButton);
     	buttonPanel.add(clearButton);
     	
-    	// Combined panel with language selector and buttons
+    	// bottom control panel
     	JPanel controlPanel = new JPanel(new BorderLayout());
-    	controlPanel.add(languagePanel, BorderLayout.NORTH);
-    	controlPanel.add(buttonPanel, BorderLayout.CENTER);
+    	controlPanel.setBackground(Theme.getBgSecondary());
+    	controlPanel.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, Theme.getBorder()));
+    	controlPanel.add(languagePanel, BorderLayout.WEST);
+    	controlPanel.add(buttonPanel, BorderLayout.EAST);
 
     	mainPanel.add(controlPanel, BorderLayout.SOUTH);
         
@@ -259,77 +335,70 @@ public class OCRView extends JFrame {
     }
     
     private void setupMenuBar() {
-        menuBar = new JMenuBar();
-        
-        fileMenu = new JMenu("File");
-        fileMenu.setMnemonic('F');
-        
-        openMenuItem = new JMenuItem("Open Image...");
-        openMenuItem.setAccelerator(KeyStroke.getKeyStroke("control O"));
-        openMenuItem.setMnemonic('O');
-        
-        saveMenuItem = new JMenuItem("Save Text...");
-        saveMenuItem.setAccelerator(KeyStroke.getKeyStroke("control S"));
-        saveMenuItem.setMnemonic('S');
-        saveMenuItem.setEnabled(false);
-        
-        exitMenuItem = new JMenuItem("Exit");
-        exitMenuItem.setAccelerator(KeyStroke.getKeyStroke("control Q"));
-        exitMenuItem.setMnemonic('X');
-        
-        fileMenu.add(openMenuItem);
-        fileMenu.add(saveMenuItem);
-        fileMenu.addSeparator();
-        fileMenu.add(exitMenuItem);
-        
-        editMenu = new JMenu("Edit");
-        editMenu.setMnemonic('E');
+    	menuBar = new JMenuBar();
+    	menuBar.setBackground(Theme.getBgSecondary());
+    	menuBar.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, Theme.getBorder()));
+    	
 
-        undoMenuItem = new JMenuItem("Undo");
-        undoMenuItem.setAccelerator(KeyStroke.getKeyStroke("control Z"));
-        undoMenuItem.setEnabled(false);
+    	// File Menu
+    	fileMenu = new JMenu("File");
+    	fileMenu.setFont(Theme.FONT_REGULAR);
+    	fileMenu.setForeground(Theme.getTextPrimary());
+    	fileMenu.setMnemonic('F');
 
-        redoMenuItem = new JMenuItem("Redo");
-        redoMenuItem.setAccelerator(KeyStroke.getKeyStroke("control Y"));
-        redoMenuItem.setEnabled(false);
+    	// Apply to all menu items
+    	openMenuItem = createStyledMenuItem("Open Image...", "control O", 'O');
+    	saveMenuItem = createStyledMenuItem("Save Text...", "control S", 'S');
+    	saveMenuItem.setEnabled(false);
+    	exitMenuItem = createStyledMenuItem("Exit", "control Q", 'X');
 
-        cutMenuItem = new JMenuItem("Cut");
-        cutMenuItem.setAccelerator(KeyStroke.getKeyStroke("control X"));
+    	fileMenu.add(openMenuItem);
+    	fileMenu.add(saveMenuItem);
+    	fileMenu.addSeparator();
+    	fileMenu.add(exitMenuItem);
 
-        copyMenuItem = new JMenuItem("Copy Text");
-        copyMenuItem.setAccelerator(KeyStroke.getKeyStroke("control C"));
-        copyMenuItem.setEnabled(false);
+    	// Edit Menu
+    	editMenu = new JMenu("Edit");
+    	editMenu.setFont(Theme.FONT_REGULAR);
+    	editMenu.setForeground(Theme.getTextPrimary());
+    	editMenu.setMnemonic('E');
 
-        pasteMenuItem = new JMenuItem("Paste");
-        pasteMenuItem.setAccelerator(KeyStroke.getKeyStroke("control V"));
+    	undoMenuItem = createStyledMenuItem("Undo", "control Z", (char)0);
+    	undoMenuItem.setEnabled(false);
+    	redoMenuItem = createStyledMenuItem("Redo", "control Y", (char)0);
+    	redoMenuItem.setEnabled(false);
+    	cutMenuItem = createStyledMenuItem("Cut", "control X", (char)0);
+    	copyMenuItem = createStyledMenuItem("Copy Text", "control C", 'C');
+    	copyMenuItem.setEnabled(false);
+    	pasteMenuItem = createStyledMenuItem("Paste", "control V", (char)0);
+    	selectAllMenuItem = createStyledMenuItem("Select All", "control A", (char)0);
+    	clearMenuItem = createStyledMenuItem("Clear All", "control L", 'L');
 
-        selectAllMenuItem = new JMenuItem("Select All");
-        selectAllMenuItem.setAccelerator(KeyStroke.getKeyStroke("control A"));
+    	editMenu.add(undoMenuItem);
+    	editMenu.add(redoMenuItem);
+    	editMenu.addSeparator();
+    	editMenu.add(cutMenuItem);
+    	editMenu.add(copyMenuItem);
+    	editMenu.add(pasteMenuItem);
+    	editMenu.addSeparator();
+    	editMenu.add(selectAllMenuItem);
+    	editMenu.addSeparator();
+    	editMenu.add(clearMenuItem);
 
-        editMenu.add(clearMenuItem);
-        editMenu.add(undoMenuItem);
-        editMenu.add(redoMenuItem);
-        editMenu.addSeparator();
-        editMenu.add(cutMenuItem);
-        editMenu.add(copyMenuItem);
-        editMenu.add(pasteMenuItem);
-        editMenu.addSeparator();
-        editMenu.add(selectAllMenuItem);
-        editMenu.addSeparator();
-        
-        helpMenu = new JMenu("Help");
-        helpMenu.setMnemonic('H');
-        
-        aboutMenuItem = new JMenuItem("About");
-        aboutMenuItem.setMnemonic('A');
-        
-        helpMenu.add(aboutMenuItem);
-        
-        menuBar.add(fileMenu);
-        menuBar.add(editMenu);
-        menuBar.add(helpMenu);
-        
-        setJMenuBar(menuBar);
+    	// Help Menu
+    	helpMenu = new JMenu("Help");
+    	helpMenu.setFont(Theme.FONT_REGULAR);
+    	helpMenu.setForeground(Theme.getTextPrimary());
+    	helpMenu.setMnemonic('H');
+
+    	aboutMenuItem = createStyledMenuItem("About", null, 'A');
+    	helpMenu.add(aboutMenuItem);
+
+    	menuBar.add(fileMenu);
+    	menuBar.add(editMenu);
+    	menuBar.add(helpMenu);
+
+    	setJMenuBar(menuBar);
     }
     
     /**
@@ -346,7 +415,7 @@ public class OCRView extends JFrame {
         try {
             // setIconImage(ImageIO.read(new File("icon.png")));
         } catch (Exception e) {
-            // Icon not available, continue without it
+        	
         }
     }
     
@@ -526,6 +595,75 @@ public class OCRView extends JFrame {
 
     public void clearSelection() {
         imageCropPanel.clearSelection();
+    }
+    
+    private void applyThemeDefaults() {
+        UIManager.put("Panel.background", Theme.getBgPrimary());
+        UIManager.put("Label.foreground", Theme.getTextPrimary());
+        UIManager.put("Button.background", Theme.getBgSecondary());
+        UIManager.put("Button.foreground", Theme.getTextPrimary());
+        UIManager.put("TextField.background", Theme.getBgTertiary());
+        UIManager.put("TextField.foreground", Theme.getTextPrimary());
+        UIManager.put("TextArea.background", Theme.getBgTertiary());
+        UIManager.put("TextArea.foreground", Theme.getTextPrimary());
+        UIManager.put("MenuBar.background", new Color(40, 40, 40));
+        UIManager.put("Menu.background", new Color(50, 50, 50));
+        UIManager.put("MenuItem.background", Theme.getBgSecondary());
+        UIManager.put("MenuItem.foreground", Theme.getTextPrimary());
+        UIManager.put("MenuBar.background", Theme.getBgSecondary());
+        UIManager.put("MenuBar.foreground", Theme.getTextPrimary());
+        
+        UIManager.put("ComboBox.background", Theme.getBgSecondary());
+        UIManager.put("ComboBox.foreground", Theme.getTextPrimary());
+        UIManager.put("ComboBox.selectionBackground", Theme.getAccent());
+        UIManager.put("ComboBox.selectionForeground", Theme.getTextPrimary());
+        UIManager.put("ComboBox.buttonBackground", Theme.getBgSecondary());
+        UIManager.put("ComboBox.buttonDarkShadow", Theme.getBorder());
+
+    }
+    
+    private JButton createStyledButton(String text, int width, int height) {
+        return createStyledButton(text, width, height, Theme.getAccent());
+    }
+
+    private JButton createStyledButton(String text, int width, int height, Color bgColor) {
+        JButton button = new JButton(text);
+        button.setFont(Theme.FONT_BUTTON);
+        button.setPreferredSize(new Dimension(width, height));
+        button.setBackground(bgColor);
+        button.setForeground(Theme.getTextPrimary());
+        button.setFocusPainted(false);
+        button.setBorderPainted(false);
+        button.setOpaque(true);
+        
+        // Hover effect
+        button.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseEntered(java.awt.event.MouseEvent evt) {
+                button.setBackground(bgColor == Theme.getError() ? 
+                    new Color(220, 50, 50) : Theme.getAccentHover());
+            }
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                button.setBackground(bgColor);
+            }
+        });
+        
+        return button;
+    }
+    
+    private JMenuItem createStyledMenuItem(String text, String accelerator, char mnemonic) {
+        JMenuItem item = new JMenuItem(text);
+        item.setFont(Theme.FONT_REGULAR);
+        item.setBackground(Theme.getBgSecondary());
+        item.setForeground(Theme.getTextPrimary());
+        
+        if (accelerator != null) {
+            item.setAccelerator(KeyStroke.getKeyStroke(accelerator));
+        }
+        if (mnemonic != 0) {
+            item.setMnemonic(mnemonic);
+        }
+        
+        return item;
     }
     
     // ========== Getters for Buttons (for Controller to add listeners) ==========
