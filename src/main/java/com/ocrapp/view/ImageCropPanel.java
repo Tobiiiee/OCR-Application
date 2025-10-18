@@ -338,10 +338,28 @@ public class ImageCropPanel extends JPanel {
                 g2d.drawRect(selectionRect.x, selectionRect.y, selectionRect.width, selectionRect.height);
                 
                 String dimensions = selectionRect.width + " × " + selectionRect.height;
-                g2d.setColor(Color.WHITE);
-                g2d.fillRect(selectionRect.x + 5, selectionRect.y + 5, 100, 20);
-                g2d.setColor(Color.BLACK);
-                g2d.drawString(dimensions, selectionRect.x + 10, selectionRect.y + 20);
+
+             FontMetrics fm = g2d.getFontMetrics();
+             int textWidth = fm.stringWidth(dimensions);
+             int textHeight = fm.getHeight();
+
+             // position near the top right edge of the image area
+             int boxPadding = 8;
+             int boxWidth = textWidth + boxPadding * 2;
+             int boxHeight = textHeight + 4;
+
+             int boxX = getWidth() - boxWidth - 15;
+             int boxY = 10;
+
+             Color bgColor = Theme.getBgPrimary();
+             Color textColor = Color.WHITE;
+
+             g2d.setColor(bgColor);
+             g2d.fillRoundRect(boxX, boxY, boxWidth, boxHeight, 10, 10);
+
+             g2d.setColor(textColor);
+             g2d.drawString(dimensions, boxX + boxPadding, boxY + fm.getAscent());
+
             }
         } else {
             g2d.setColor(Theme.getTextSecondary());
