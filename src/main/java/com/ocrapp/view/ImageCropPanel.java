@@ -16,7 +16,8 @@ public class ImageCropPanel extends JPanel {
     
     // this is unused, its just here to remove eclipse warning
     private static final long serialVersionUID = 1L;
-        
+    
+    private BufferedImage originalImage;
     private BufferedImage image;
     private BufferedImage scaledImage;
     private Rectangle selectionRect;
@@ -56,6 +57,7 @@ public class ImageCropPanel extends JPanel {
         add(dropZonePanel, BorderLayout.CENTER);
         
         setupMouseListeners();
+        setupResizeListener();
     }
     
     /**
@@ -180,7 +182,8 @@ public class ImageCropPanel extends JPanel {
      * @param image Image to display
      */
     public void setImage(BufferedImage image) {
-        this.image = image;
+        this.originalImage = image;  // ALWAYS store original
+        this.image = image;           // Keep for compatibility
         this.selectionRect = null;
         this.startPoint = null;
         this.endPoint = null;
@@ -192,6 +195,7 @@ public class ImageCropPanel extends JPanel {
             }
         } else {
             this.scaledImage = null;
+            this.originalImage = null;
             if (dropZonePanel != null) {
                 dropZonePanel.setVisible(true);
             }
@@ -214,9 +218,9 @@ public class ImageCropPanel extends JPanel {
             panelHeight = 400;
         }
         
-        int imgWidth = image.getWidth();
-        int imgHeight = image.getHeight();
-        
+        int imgWidth = originalImage.getWidth();
+        int imgHeight = originalImage.getHeight();
+
         double scale = Math.min(
             (double) panelWidth / imgWidth,
             (double) panelHeight / imgHeight
@@ -243,7 +247,7 @@ public class ImageCropPanel extends JPanel {
      * @return BufferedImage of selected region, or null if no selection
      */
     public BufferedImage getSelectedRegion() {
-        if (image == null || selectionRect == null) return null;
+        if (originalImage == null || selectionRect == null) return null;
 
         // Adjust for centering offset
         int adjX = selectionRect.x - imageXOffset;
@@ -254,22 +258,22 @@ public class ImageCropPanel extends JPanel {
             adjX > scaledImage.getWidth() || adjY > scaledImage.getHeight()) {
             return null;
         }
- 
-        // Convert to original image coordinates
+     
+        // Convert to ORIGINAL image coordinates
         int x = (int) (adjX * scaleX);
         int y = (int) (adjY * scaleY);
         int width = (int) (selectionRect.width * scaleX);
         int height = (int) (selectionRect.height * scaleY);
 
-        x = Math.max(0, Math.min(x, image.getWidth() - 1));
-        y = Math.max(0, Math.min(y, image.getHeight() - 1));
-        width = Math.min(width, image.getWidth() - x);
-        height = Math.min(height, image.getHeight() - y);
+        x = Math.max(0, Math.min(x, originalImage.getWidth() - 1));
+        y = Math.max(0, Math.min(y, originalImage.getHeight() - 1));
+        width = Math.min(width, originalImage.getWidth() - x);
+        height = Math.min(height, originalImage.getHeight() - y);
 
         if (width <= 0 || height <= 0) return null;
 
         try {
-            return image.getSubimage(x, y, width, height);
+            return originalImage.getSubimage(x, y, width, height);  // Use ORIGINAL!
         } catch (Exception e) {
             System.err.println("Error extracting region: " + e.getMessage());
             return null;
@@ -365,5 +369,21 @@ public class ImageCropPanel extends JPanel {
             int y = getHeight() / 2;
             g2d.drawString(message, x, y);
         }
+    }
+    
+    /**
+     * Setup listener to handle panel resizing
+     */
+    private void setupResizeListener() {
+        addComponentListener(new java.awt.event.ComponentAdapter() {
+            @Override
+            public void componentResized(java.awt.event.ComponentEvent e) {
+                // Recalculate scaling when panel is resized
+                if (originalImage != null) {
+                    scaleImageToFit();
+                    repaint();
+                }
+            }
+        });
     }
 }
