@@ -161,26 +161,19 @@ public class ImageCropPanel extends JPanel {
      * Update selection rectangle based on start and end points
      */
     private void updateSelectionRect() {
-    	if (startPoint != null && endPoint != null) {
-            int startX = startPoint.x - imageXOffset;
-            int startY = startPoint.y - imageYOffset;
-            int endX = endPoint.x - imageXOffset;
-            int endY = endPoint.y - imageYOffset;
+        if (startPoint != null && endPoint != null && scaledImage != null) {
+            int x1 = Math.max(imageXOffset, Math.min(startPoint.x, endPoint.x));
+            int y1 = Math.max(imageYOffset, Math.min(startPoint.y, endPoint.y));
+            int x2 = Math.min(imageXOffset + scaledImage.getWidth(), Math.max(startPoint.x, endPoint.x));
+            int y2 = Math.min(imageYOffset + scaledImage.getHeight(), Math.max(startPoint.y, endPoint.y));
 
-            // selection stays within the displayed image
-            startX = Math.max(0, Math.min(startX, scaledImage.getWidth()));
-            startY = Math.max(0, Math.min(startY, scaledImage.getHeight()));
-            endX = Math.max(0, Math.min(endX, scaledImage.getWidth()));
-            endY = Math.max(0, Math.min(endY, scaledImage.getHeight()));
+            int width = Math.max(0, x2 - x1);
+            int height = Math.max(0, y2 - y1);
 
-            int x = Math.min(startX, endX) + imageXOffset;
-            int y = Math.min(startY, endY) + imageYOffset;
-            int width = Math.abs(endX - startX);
-            int height = Math.abs(endY - startY);
-
-            selectionRect = new Rectangle(x, y, width, height);
+            selectionRect = new Rectangle(x1, y1, width, height);
         }
     }
+
     
     /**
      * Set image to display
