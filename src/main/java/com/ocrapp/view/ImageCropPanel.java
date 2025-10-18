@@ -133,14 +133,6 @@ public class ImageCropPanel extends JPanel {
                     }
                 }
             }
-            @Override
-            public void mouseExited(MouseEvent e) {
-                if (selectionEnabled && !isDragging) {
-                    selectionEnabled = false;
-                    repaint();
-                }
-                setCursor(Cursor.getDefaultCursor());
-            }
         };
         
         addMouseListener(mouseAdapter);
@@ -169,12 +161,23 @@ public class ImageCropPanel extends JPanel {
      * Update selection rectangle based on start and end points
      */
     private void updateSelectionRect() {
-        if (startPoint != null && endPoint != null) {
-            int x = Math.min(startPoint.x, endPoint.x);
-            int y = Math.min(startPoint.y, endPoint.y);
-            int width = Math.abs(endPoint.x - startPoint.x);
-            int height = Math.abs(endPoint.y - startPoint.y);
-            
+    	if (startPoint != null && endPoint != null) {
+            int startX = startPoint.x - imageXOffset;
+            int startY = startPoint.y - imageYOffset;
+            int endX = endPoint.x - imageXOffset;
+            int endY = endPoint.y - imageYOffset;
+
+            // selection stays within the displayed image
+            startX = Math.max(0, Math.min(startX, scaledImage.getWidth()));
+            startY = Math.max(0, Math.min(startY, scaledImage.getHeight()));
+            endX = Math.max(0, Math.min(endX, scaledImage.getWidth()));
+            endY = Math.max(0, Math.min(endY, scaledImage.getHeight()));
+
+            int x = Math.min(startX, endX) + imageXOffset;
+            int y = Math.min(startY, endY) + imageYOffset;
+            int width = Math.abs(endX - startX);
+            int height = Math.abs(endY - startY);
+
             selectionRect = new Rectangle(x, y, width, height);
         }
     }
