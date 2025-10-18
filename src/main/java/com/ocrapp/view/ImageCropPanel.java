@@ -35,6 +35,7 @@ public class ImageCropPanel extends JPanel {
     private int imageXOffset;
     private int imageYOffset;
     
+    private DropZonePanel dropZonePanel;
     private Consumer<BufferedImage> onSelectionComplete;
 
     /**
@@ -49,6 +50,10 @@ public class ImageCropPanel extends JPanel {
         
         setBackground(Theme.getBgSecondary());
         setPreferredSize(new Dimension(600, 400));
+        setLayout(new BorderLayout());
+        
+        dropZonePanel = new DropZonePanel();
+        add(dropZonePanel, BorderLayout.CENTER);
         
         setupMouseListeners();
     }
@@ -186,8 +191,14 @@ public class ImageCropPanel extends JPanel {
         
         if (image != null) {
             scaleImageToFit();
+            if (dropZonePanel != null) {
+                dropZonePanel.setVisible(false);
+            }
         } else {
             this.scaledImage = null;
+            if (dropZonePanel != null) {
+                dropZonePanel.setVisible(true);
+            }
         }
         
         repaint();
@@ -290,6 +301,10 @@ public class ImageCropPanel extends JPanel {
     
     @Override
     protected void paintComponent(Graphics g) {
+    	  if (image == null) {
+    	        return;
+    	    }
+    	  
         super.paintComponent(g);
         Graphics2D g2d = (Graphics2D) g;
         

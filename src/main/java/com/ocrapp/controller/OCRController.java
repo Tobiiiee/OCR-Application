@@ -80,8 +80,8 @@ public class OCRController {
     private void initializeListeners() {
         view.getLoadImageButton().addActionListener(e -> handleLoadImage());
         view.getExtractTextButton().addActionListener(e -> handleExtractText(currentImage, false));
-        view.getSaveTextButton().addActionListener(e -> handleSaveText());
         view.getClearButton().addActionListener(e -> handleClear());
+        view.getCopyClipboardButton().addActionListener(e -> handleCopyToClipboard());
         
         view.getLanguageComboBox().addActionListener(e -> handleLanguageChange());
         
@@ -96,6 +96,7 @@ public class OCRController {
         view.getCutMenuItem().addActionListener(e -> view.getText());
         view.getPasteMenuItem().addActionListener(e -> handlePaste());
         view.getSelectAllMenuItem().addActionListener(e -> handleSelectAll());
+        view.setSaveMenuEnabled(true);
         
         // drag & drop and paste from clipboard
         setupDragAndDrop();
@@ -231,7 +232,6 @@ public class OCRController {
                     view.setTextInfo(textInfo);
                     
                     if (!finalText.trim().isEmpty()) {
-                        view.setSaveButtonEnabled(true);
                         view.getCopyMenuItem().setEnabled(true);
                         
                         if (shouldAppend) {

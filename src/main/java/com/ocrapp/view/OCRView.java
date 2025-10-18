@@ -36,7 +36,6 @@ public class OCRView extends JFrame {
     
     private JButton loadImageButton;
     private JButton extractTextButton;
-    private JButton saveTextButton;
     private JButton clearButton;
     private JButton copyClipboardButton;
     
@@ -208,12 +207,6 @@ public class OCRView extends JFrame {
         copyClipboardButton.setFont(new Font("Arial", Font.BOLD, 14));
         copyClipboardButton.setPreferredSize(new Dimension(150, 40));
         copyClipboardButton.setToolTipText("Perform OCR on the entire loaded image");
-        
-        saveTextButton = createStyledButton("Save Text", 120, 35);
-        saveTextButton.setFont(new Font("Arial", Font.BOLD, 14));
-        saveTextButton.setPreferredSize(new Dimension(150, 40));
-        saveTextButton.setEnabled(false);
-        saveTextButton.setToolTipText("Save extracted text to a file");
         
         clearButton = createStyledButton("Clear All", 120, 35, Theme.getError());
         clearButton.setFont(new Font("Arial", Font.BOLD, 14));
@@ -511,7 +504,6 @@ public class OCRView extends JFrame {
         textInfoLabel.setText("Text: 0 characters, 0 words");
         setStatus("Ready");
         extractTextButton.setEnabled(false);
-        saveTextButton.setEnabled(false);
         saveMenuItem.setEnabled(false);
     }
     
@@ -527,8 +519,7 @@ public class OCRView extends JFrame {
      * Enable or disable save button
      * @param enabled true to enable, false to disable
      */
-    public void setSaveButtonEnabled(boolean enabled) {
-        saveTextButton.setEnabled(enabled);
+    public void setSaveMenuEnabled(boolean enabled) {
         saveMenuItem.setEnabled(enabled);
     }
     
@@ -676,14 +667,13 @@ public class OCRView extends JFrame {
         return extractTextButton;
     }
     
-    public JButton getSaveTextButton() {
-        return saveTextButton;
-    }
-    
     public JButton getClearButton() {
         return clearButton;
     }
     
+    public JButton getCopyClipboardButton() {
+    	return copyClipboardButton;
+    }
     public JMenuItem getOpenMenuItem() {
         return openMenuItem;
     }
