@@ -11,7 +11,9 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
-
+import javax.swing.AbstractAction;
+import java.awt.event.ActionEvent;
+import javax.swing.Timer;
 
 /**
  * Main GUI view for the OCR Application.
@@ -77,6 +79,8 @@ public class OCRView extends JFrame {
         setupLayout();
         setupMenuBar();
         configureWindow();
+        setupZoomShortcuts(); 
+        
         setFocusable(true); 
         addMouseListener(new MouseAdapter() {
             @Override
@@ -105,6 +109,11 @@ public class OCRView extends JFrame {
 
         imageScrollPane = new JScrollPane(imageCropPanel);
         imageScrollPane.setPreferredSize(new Dimension(570, 520));
+        imageScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        imageScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+
+        imageScrollPane.getHorizontalScrollBar().setBackground(Theme.getBgTertiary());
+        imageScrollPane.getVerticalScrollBar().setBackground(Theme.getBgTertiary());
 
         JPanel imageHeaderPanel = new JPanel(new BorderLayout());
         imageHeaderPanel.setBackground(Theme.getBgSecondary());
@@ -420,6 +429,10 @@ public class OCRView extends JFrame {
      */
     public void displayImage(BufferedImage image) {
         imageCropPanel.setImage(image);
+        if (image != null) {
+            imageCropPanel.setPreferredSize(new Dimension(image.getWidth(), image.getHeight()));
+            imageCropPanel.revalidate();
+        }
     }
     
     /**
@@ -655,6 +668,67 @@ public class OCRView extends JFrame {
         }
         
         return item;
+    }
+    
+    /**
+     * Setup zoom keyboard shortcuts (Ctrl+ and Ctrl-)
+     */
+    private void setupZoomShortcuts() {
+        // Ctrl + (Zoom In)
+        getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW)
+            .put(KeyStroke.getKeyStroke("control EQUALS"), "zoomIn");
+        getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW)
+            .put(KeyStroke.getKeyStroke("control PLUS"), "zoomIn");
+        getRootPane().getActionMap().put("zoomIn", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                imageCropPanel.zoomIn();
+                updateZoomStatus();
+            }
+        });
+        
+        // Ctrl - (Zoom Out)
+        getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW)
+            .put(KeyStroke.getKeyStroke("control MINUS"), "zoomOut");
+        getRootPane().getActionMap().put("zoomOut", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                imageCropPanel.zoomOut();
+                updateZoomStatus();
+            }
+        });
+        
+        // Ctrl 0 (Reset Zoom)
+        getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW)
+            .put(KeyStroke.getKeyStroke("control 0"), "resetZoom");
+        getRootPane().getActionMap().put("resetZoom", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                imageCropPanel.resetZoom();
+                updateZoomStatus();
+            }
+        });
+    }
+
+    /**
+     * Update status bar with current zoom level
+     */
+    private void updateZoomStatus() {
+        int zoomPercent = (int) (imageCropPanel.getZoomLevel() * 100);
+        String currentStatus = statusLabel.getText();
+        
+        // Show zoom level temporarily
+        String originalStatus = currentStatus;
+        statusLabel.setText("Zoom: " + zoomPercent + "%");
+        
+        // Restore original status after 2 seconds
+        Timer timer = new Timer(2000, e -> {
+            if (statusLabel.getText().startsWith("Zoom:")) {
+                statusLabel.setText(originalStatus);
+            }
+        });
+        timer.setRepeats(false);
+        timer.start();
     }
     
     // ========== Getters for Buttons (for Controller to add listeners) ==========

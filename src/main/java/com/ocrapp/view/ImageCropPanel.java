@@ -33,6 +33,11 @@ public class ImageCropPanel extends JPanel {
     private static final Color BORDER_COLOR = Theme.getSelectionBorder();
     private static final BasicStroke BORDER_STROKE = new BasicStroke(2.0f);
     
+    private double zoomLevel = 1.0;
+    private static final double ZOOM_MIN = 0.25;  // 25%
+    private static final double ZOOM_MAX = 4.0;   // 400%
+    private static final double ZOOM_STEP = 0.25; // 25% per step
+    
     private int imageXOffset;
     private int imageYOffset;
     
@@ -187,6 +192,7 @@ public class ImageCropPanel extends JPanel {
         this.selectionRect = null;
         this.startPoint = null;
         this.endPoint = null;
+        this.zoomLevel = 1.0;
         
         if (image != null) {
             scaleImageToFit();
@@ -226,8 +232,8 @@ public class ImageCropPanel extends JPanel {
             (double) panelHeight / imgHeight
         );
         
-        int scaledWidth = (int) (imgWidth * scale);
-        int scaledHeight = (int) (imgHeight * scale);
+        int scaledWidth = (int) (imgWidth * scale * zoomLevel);
+        int scaledHeight = (int) (imgHeight * scale * zoomLevel);
         
         scaleX = (double) imgWidth / scaledWidth;
         scaleY = (double) imgHeight / scaledHeight;
@@ -385,5 +391,37 @@ public class ImageCropPanel extends JPanel {
                 }
             }
         });
+    }
+    
+    public void zoomIn() {
+        if (zoomLevel < ZOOM_MAX) {
+            zoomLevel += ZOOM_STEP;
+            if (originalImage != null) {
+                scaleImageToFit();
+                repaint();
+            }
+        }
+    }
+
+    public void zoomOut() {
+        if (zoomLevel > ZOOM_MIN) {
+            zoomLevel -= ZOOM_STEP;
+            if (originalImage != null) {
+                scaleImageToFit();
+                repaint();
+            }
+        }
+    }
+
+    public void resetZoom() {
+        zoomLevel = 1.0;
+        if (originalImage != null) {
+            scaleImageToFit();
+            repaint();
+        }
+    }
+
+    public double getZoomLevel() {
+        return zoomLevel;
     }
 }
