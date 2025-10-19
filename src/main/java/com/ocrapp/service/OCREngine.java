@@ -53,11 +53,11 @@ public class OCREngine {
             
             // Set OCR Engine Mode (OEM)
             // 3 = Default, based on what is available (LSTM + Legacy)
-            tesseract.setOcrEngineMode(3);
+            tesseract.setOcrEngineMode(1);
             
             // Set Page Segmentation Mode (PSM)
             // 3 = Fully automatic page segmentation, but no OSD (Orientation and Script Detection)
-            tesseract.setPageSegMode(3);
+            tesseract.setPageSegMode(5);
             
             this.isInitialized = true;
             System.out.println("Tesseract OCR engine initialized successfully");
@@ -186,6 +186,8 @@ public class OCREngine {
             long startTime = System.currentTimeMillis();
             
             // Perform OCR on preprocessed image
+            
+            applyLanguageSpecificSettings();
             String extractedText = tesseract.doOCR(processedImage);
             
             long endTime = System.currentTimeMillis();
@@ -353,5 +355,53 @@ public class OCREngine {
         info.append("Language: ").append(currentLanguage).append("\n");
         info.append("Data Path: ").append(DEFAULT_DATA_PATH).append("\n");
         return info.toString();
+    }
+    
+    /**
+     * Apply OCR settings based on current language
+     * Different languages need different page segmentation and engine modes
+     */
+    private void applyLanguageSpecificSettings() {
+        String currentLang = getCurrentLanguage();
+        
+        if (isVerticalTextLanguage(currentLang)) {
+            // Settings for vertical text languages (Japanese, Chinese)
+            tesseract.setPageSegMode(5);  // Single uniform block of vertically aligned text
+            tesseract.setOcrEngineMode(1); // LSTM engine (better for Asian languages)
+            System.out.println("Applied vertical text settings for language: " + currentLang);
+        } else if (isComplexScriptLanguage(currentLang)) {
+            // Settings for Arabic, Hebrew (RTL languages)
+            tesseract.setPageSegMode(6);  // Uniform block of text
+            tesseract.setOcrEngineMode(1); // LSTM engine
+            System.out.println("Applied complex script settings for language: " + currentLang);
+        } else {
+            // Settings for horizontal languages (English, Spanish, French, etc.)
+            tesseract.setPageSegMode(3);  // Fully automatic page segmentation
+            tesseract.setOcrEngineMode(3); // Default (Tesseract + LSTM)
+            System.out.println("Applied standard horizontal text settings for language: " + currentLang);
+        }
+    }
+
+    /**
+     * Check if language uses vertical text
+     * @param langCode Language code (e.g., "jpn", "chi_sim")
+     * @return true if language commonly uses vertical text
+     */
+    private boolean isVerticalTextLanguage(String langCode) {
+        return langCode.equals("jpn") ||      // Japanese
+               langCode.equals("chi_sim") ||  // Chinese Simplified
+               langCode.equals("chi_tra");  // Chinese Traditional
+    }
+
+    /**
+     * Check if language uses complex scripts (RTL, etc.)
+     * @param langCode Language code
+     * @return true if language uses complex script
+     */
+    private boolean isComplexScriptLanguage(String langCode) {
+        return langCode.equals("ara") ||      // Arabic
+               langCode.equals("heb") ||      // Hebrew
+               langCode.equals("fas") ||      // Persian
+               langCode.equals("urd");        // Urdu
     }
 }
