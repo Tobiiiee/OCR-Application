@@ -316,10 +316,14 @@ public class ImageCropPanel extends JPanel {
         
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         
-        if (scaledImage != null) {
-            int x = (getWidth() - scaledImage.getWidth()) / 2;
-            int y = (getHeight() - scaledImage.getHeight()) / 2;
-            g2d.drawImage(scaledImage, x, y, null);
+        if (originalImage != null) {
+            int scaledWidth = (int) (originalImage.getWidth() / scaleX);
+            int scaledHeight = (int) (originalImage.getHeight() / scaleY);
+            int x = imageXOffset;
+            int y = imageYOffset;
+
+            g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
+            g2d.drawImage(originalImage, x, y, scaledWidth, scaledHeight, null);
             
             // Draw selection indicator message when in selection mode
             if (selectionEnabled && !isDragging && selectionRect == null) {

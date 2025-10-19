@@ -278,25 +278,21 @@ public class ImageProcessor {
         if (image == null || targetWidth <= 0 || targetHeight <= 0) {
             return null;
         }
-        
-        Image scaledImage = image.getScaledInstance(
-                targetWidth,
-                targetHeight,
-                Image.SCALE_SMOOTH
-        );
-        
-        BufferedImage resizedImage = new BufferedImage(
-                targetWidth,
-                targetHeight,
-                BufferedImage.TYPE_INT_RGB
-        );
-        
+
+        BufferedImage resizedImage = new BufferedImage(targetWidth, targetHeight, BufferedImage.TYPE_INT_ARGB);
         Graphics2D g2d = resizedImage.createGraphics();
-        g2d.drawImage(scaledImage, 0, 0, null);
+
+        // High-quality rendering hints
+        g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
+        g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+        g2d.drawImage(image, 0, 0, targetWidth, targetHeight, null);
         g2d.dispose();
-        
+
         return resizedImage;
     }
+
     
     /**
      * Validate image format and readability

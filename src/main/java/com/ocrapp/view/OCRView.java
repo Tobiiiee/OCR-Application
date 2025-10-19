@@ -318,16 +318,29 @@ public class OCRView extends JFrame {
 
     	mainPanel.add(controlPanel, BorderLayout.SOUTH);
         
-        // Progress panel with bar and label
-        JPanel progressPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 5));
-        progressPanel.add(progressLabel);
-        progressPanel.add(progressBar);
-        progressPanel.setVisible(false); // Hidden by default
+    	// Status panel - three sections: left (status), center (progress), right (empty for balance)
+    	JPanel statusPanel = new JPanel(new BorderLayout());
+    	statusPanel.setBackground(Theme.getBgSecondary());
 
-        // Status panel with progress
-        JPanel statusPanel = new JPanel(new BorderLayout());
-        statusPanel.add(statusLabel, BorderLayout.CENTER);
-        statusPanel.add(progressPanel, BorderLayout.NORTH);
+    	// Left side - status label
+    	statusLabel.setBorder(BorderFactory.createEmptyBorder(8, 15, 8, 15));
+    	JPanel statusLeftPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+    	statusLeftPanel.setBackground(Theme.getBgSecondary());
+    	statusLeftPanel.add(statusLabel);
+    	statusPanel.add(statusLeftPanel, BorderLayout.WEST);
+
+    	// Center - progress bar and label
+    	JPanel progressPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 5));
+    	progressPanel.setBackground(Theme.getBgSecondary());
+    	progressPanel.add(progressLabel);
+    	progressPanel.add(progressBar);
+    	statusPanel.add(progressPanel, BorderLayout.CENTER);
+
+    	// Right side - Empty (for now) for balance
+    	JPanel statusRightPanel = new JPanel();
+    	statusRightPanel.setBackground(Theme.getBgSecondary());
+    	statusRightPanel.setPreferredSize(new Dimension(200, 0));
+    	statusPanel.add(statusRightPanel, BorderLayout.EAST);
         
         // Main container
         Container contentPane = getContentPane();
@@ -563,7 +576,6 @@ public class OCRView extends JFrame {
         progressBar.setValue(0);
         progressBar.setVisible(true);
         progressLabel.setVisible(true);
-        progressBar.getParent().setVisible(true);
     }
 
     /**
@@ -582,7 +594,6 @@ public class OCRView extends JFrame {
     public void hideProgress() {
         progressBar.setVisible(false);
         progressLabel.setVisible(false);
-        progressBar.getParent().setVisible(false);
     }
     
     /**
