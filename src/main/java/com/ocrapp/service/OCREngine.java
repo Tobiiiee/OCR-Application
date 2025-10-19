@@ -51,13 +51,9 @@ public class OCREngine {
             tesseract.setDatapath(DEFAULT_DATA_PATH);
             tesseract.setLanguage(currentLanguage);
             
-            // Set OCR Engine Mode (OEM)
-            // 3 = Default, based on what is available (LSTM + Legacy)
-            tesseract.setOcrEngineMode(1);
-            
-            // Set Page Segmentation Mode (PSM)
-            // 3 = Fully automatic page segmentation, but no OSD (Orientation and Script Detection)
-            tesseract.setPageSegMode(5);
+            // Default OEM & PSM (3)
+            tesseract.setOcrEngineMode(3);
+            tesseract.setPageSegMode(3);
             
             this.isInitialized = true;
             System.out.println("Tesseract OCR engine initialized successfully");
