@@ -14,6 +14,13 @@ public class DropZonePanel extends JPanel {
     public DropZonePanel() {
         setBackground(Theme.getBgSecondary());
         setOpaque(true);
+        
+        addComponentListener(new java.awt.event.ComponentAdapter() {
+            @Override
+            public void componentResized(java.awt.event.ComponentEvent e) {
+                repaint();
+            }
+        });
     }
     
     @Override
